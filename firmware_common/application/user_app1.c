@@ -92,6 +92,10 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
+LcdClearScreen();
+PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+u8 au8TestString[] = {"Testing"};
+LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -102,7 +106,6 @@ void UserApp1Initialize(void)
     /* The task isn't properly initialized, so shut it down and don't run */
     UserApp1_pfStateMachine = UserApp1SM_Error;
   }
-
 } /* end UserApp1Initialize() */
 
   
@@ -140,7 +143,8 @@ State Machine Function Definitions
 /* What does this state do? */
 static void UserApp1SM_Idle(void)
 {
-     
+  
+
 } /* end UserApp1SM_Idle() */
      
 
