@@ -245,6 +245,7 @@ def build(ctx):
         "firmware_dotmatrix/drivers",
         "firmware_dotmatrix/libraries/captouch",
         "firmware_dotmatrix/libraries/captouch/include",
+        "firmware_dotmatrix/application"
     ]
 
     # Add blade files directly to the source to avoid compiling the template files
