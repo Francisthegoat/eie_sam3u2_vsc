@@ -17,77 +17,80 @@ Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_pfStateMachine; /*!< @brief The state machine function pointer */
-static u8 Password[10] = {0, 1, 1, 0};     // Default password
-static u8 CandidatePassword[10];          // User-entered password
-static u8 PasswordLength = 4;             // Default password length
+static u8 Password[4] = {0, 1, 1, 0};     // Default password with 4 inputs
+static u8 CandidatePassword[4];          // User-entered password
 static u8 InputIndex = 0;                 // Track user input index
 static bool SettingPassword = FALSE;      // Flag to track password-setting state
 
 /***********************************************************************************************************************
 LED Control Functions
 ***********************************************************************************************************************/
-void LedSetColorYellow(void) {
-    LedOn(RED3);
-    LedOn(GREEN3);
-    LedPWM(RED3, LED_PWM_50);   // 50% brightness
-    LedPWM(GREEN3, LED_PWM_50); // 50% brightness
-    LedOff(BLUE3);
-}
-
-void LedSetColorGreen(void) {
-    LedOff(RED3);
-    LedOn(GREEN3);
-    LedPWM(GREEN3, LED_PWM_50); // 50% brightness
-    LedOff(BLUE3);
-}
-
-void LedSetColorRed(void) {
-    LedOn(RED3);
-    LedPWM(RED3, LED_PWM_50); // 50% brightness
-    LedOff(GREEN3);
-    LedOff(BLUE3);
-}
-
 void LedSetColorWhite(void) {
     LedOn(RED3);
     LedOn(GREEN3);
     LedOn(BLUE3);
-    LedPWM(RED3, LED_PWM_50);   // 50% brightness
-    LedPWM(GREEN3, LED_PWM_50); // 50% brightness
-    LedPWM(BLUE3, LED_PWM_50);  // 50% brightness
+    LedPWM(RED3, LED_PWM_10);  // 50% brightness for RED
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness for GREEN
+    LedPWM(BLUE3, LED_PWM_10);  // 50% brightness for BLUE
 }
 
-void LedFeedbackButton0(void) {
-    LedOn(BLUE0);
-    LedPWM(BLUE0, LED_PWM_50); // Feedback for BUTTON0
+void LedSetColorPurple(void) {
+    LedOn(RED3);  
+    LedOn(GREEN3);
+    LedPWM(RED3, LED_PWM_10);  // 50% brightness for RED
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness for GREEN
+    LedOff(BLUE3); // Ensure BLUE is off
+}
+
+void LedSetColorYellow(void) {
+    LedOn(RED3);  
+    LedOn(GREEN3);
+    LedPWM(RED3, LED_PWM_10);  // 50% brightness for RED
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness for GREEN
+    LedOff(BLUE3); // Ensure BLUE is off
+}
+
+void LedSetColorGreen(void) {
+    LedOff(RED3); // Ensure RED is off
+    LedOn(GREEN3);
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness for GREEN
+    LedOff(BLUE3); // Ensure BLUE is off
+}
+
+void LedSetColorRed(void) {
+    LedOn(RED3);
+    LedPWM(RED3, LED_PWM_10); // 50% brightness for RED
+    LedOff(GREEN3); // Ensure GREEN is off
+    LedOff(BLUE3); // Ensure BLUE is off
+}
+
+void LedFlashBlue(u8 led) {
+    LedOn(led);
+    LedPWM(led, LED_PWM_10);  // Flash with low brightness
     DelayMs(100);
-    LedOff(BLUE0);
-}
-
-void LedFeedbackButton1(void) {
-    LedOn(BLUE1);
-    LedPWM(BLUE1, LED_PWM_50); // Feedback for BUTTON1
-    DelayMs(100);
-    LedOff(BLUE1);
-}
-
-void DelayMs(u32 ms) {
-    volatile u32 count;
-    while (ms--) {
-        for (count = 0; count < 8000; count++) {
-            __asm("nop"); // No-operation instruction
-        }
-    }
+    LedOff(led);
 }
 
 /***********************************************************************************************************************
 Helper Functions
 ***********************************************************************************************************************/
 static void ResetCandidatePassword(void) {
-    for (u8 i = 0; i < 10; i++) {
+    for (u8 i = 0; i < 4; i++) {
         CandidatePassword[i] = 0;
     }
     InputIndex = 0;
+}
+
+/***********************************************************************************************************************
+Delay Function
+***********************************************************************************************************************/
+void DelayMs(u32 ms) {
+    volatile u32 count;
+    while (ms--) {
+        for (count = 0; count < 8000; count++) {
+            __asm("nop"); // No-operation instruction for a simple delay
+        }
+    }
 }
 
 /***********************************************************************************************************************
@@ -105,6 +108,7 @@ void UserApp1Initialize(void) {
     LedOn(LCD_BL);  // Ensure the LCD backlight is on
     LcdClearScreen();
 
+    // Display welcome messages on the LCD
     PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
     u8 au8TestString[] = {"Hello, ATCO Talent"};
     LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
@@ -130,7 +134,7 @@ static void UserApp1SM_Idle(void) {
     if (IsButtonHeld(BUTTON0, 3000) && !SettingPassword) {
         SettingPassword = TRUE;
         ResetCandidatePassword();
-        LedSetColorWhite(); // Indicate password-setting mode
+        LedSetColorWhite(); // Flash white on LED3 to enter password setting mode
         return;
     }
 
@@ -138,19 +142,19 @@ static void UserApp1SM_Idle(void) {
     if (SettingPassword) {
         if (WasButtonPressed(BUTTON0)) {
             CandidatePassword[InputIndex++] = 0;
-            LedFeedbackButton0();
+            LedFlashBlue(BLUE0); // Feedback for Button0 press (blue on LED0)
             ButtonAcknowledge(BUTTON0);
         }
 
         if (WasButtonPressed(BUTTON1)) {
             CandidatePassword[InputIndex++] = 1;
-            LedFeedbackButton1();
+            LedFlashBlue(BLUE1); // Feedback for Button1 press (blue on LED1)
             ButtonAcknowledge(BUTTON1);
         }
 
         /* Prevent overflow */
-        if (InputIndex >= 10) {
-            InputIndex = 10;
+        if (InputIndex >= 4) {
+            InputIndex = 4;
         }
 
         /* Finish password-setting when BUTTON0 is held again for 3 seconds */
@@ -158,9 +162,8 @@ static void UserApp1SM_Idle(void) {
             for (u8 i = 0; i < InputIndex; i++) {
                 Password[i] = CandidatePassword[i];
             }
-            PasswordLength = InputIndex;
             SettingPassword = FALSE;
-            LedSetColorYellow(); // Return to locked state
+            LedSetColorPurple(); // Flash purple on LED3 to indicate new password has been set
         }
         return;
     }
@@ -168,35 +171,30 @@ static void UserApp1SM_Idle(void) {
     /* Handle normal password input in locked state */
     if (WasButtonPressed(BUTTON0)) {
         CandidatePassword[InputIndex++] = 0;
-        LedFeedbackButton0();
+        LedSetColorGreen(); // Feedback for button 0 press
         ButtonAcknowledge(BUTTON0);
     }
 
     if (WasButtonPressed(BUTTON1)) {
         CandidatePassword[InputIndex++] = 1;
-        LedFeedbackButton1();
+        LedSetColorRed(); // Feedback for button 1 press
         ButtonAcknowledge(BUTTON1);
     }
 
     /* Prevent overflow */
-    if (InputIndex >= 10) {
-        InputIndex = 10;
+    if (InputIndex >= 4) {
+        InputIndex = 4;
     }
 
-    /* Password verification */
-    if (IsButtonHeld(BUTTON0, 750) && IsButtonHeld(BUTTON1, 750)) {
+    /* Automatic password verification after 4 inputs */
+    if (InputIndex == 4) {
         bool Match = TRUE;
 
-        /* Check password length */
-        if (InputIndex != PasswordLength) {
-            Match = FALSE;
-        } else {
-            /* Check password values */
-            for (u8 i = 0; i < PasswordLength; i++) {
-                if (CandidatePassword[i] != Password[i]) {
-                    Match = FALSE;
-                    break;
-                }
+        /* Check password values */
+        for (u8 i = 0; i < 4; i++) {
+            if (CandidatePassword[i] != Password[i]) {
+                Match = FALSE;
+                break;
             }
         }
 
@@ -219,6 +217,15 @@ static void UserApp1SM_Idle(void) {
     }
 }
 
-static void UserApp1SM_Error(void) {
+/*************  ✨ Codeium Command ⭐  *************/
+/**
+ * @brief Handles error state in UserApp1 state machine.
+ *
+ * This function is called when the state machine encounters an error.
+ * It should implement measures to handle errors, such as logging or
+ * entering a safe default state.
+ */
+
+/******  a00add2d-8258-4973-accd-cb745a6c0e40  *******/static void UserApp1SM_Error(void) {
     /* Error handling state */
 }
