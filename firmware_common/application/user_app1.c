@@ -108,18 +108,51 @@ void UserApp1Initialize(void) {
     LedOn(LCD_BL);  // Ensure the LCD backlight is on
     LcdClearScreen();
 
+    const u8 aau8AtcoLogo[25][4] = {
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00},
+    {0x30, 0x00, 0x00, 0x00}, // Top part of 'A'
+    {0x78, 0x00, 0x00, 0x00}, // Part of 'A'
+    {0x48, 0x00, 0x00, 0x00}, // Vertical of 'A'
+    {0x48, 0x00, 0x00, 0x00}, // Vertical of 'A'
+    {0x78, 0x00, 0x00, 0x00}, // Horizontal of 'A'
+    {0x30, 0x00, 0x00, 0x00}, // Lower part of 'A'
+    {0x00, 0x00, 0x00, 0x00}, // Space between 'A' and 'T'
+    {0x0F, 0x00, 0x00, 0x00}, // Top part of 'T'
+    {0x0F, 0x00, 0x00, 0x00}, // Horizontal line of 'T'
+    {0x00, 0x00, 0x00, 0x00}, // Space between 'T' and 'C'
+    {0x38, 0x00, 0x00, 0x00}, // Top curve of 'C'
+    {0x48, 0x00, 0x00, 0x00}, // Vertical line of 'C'
+    {0x48, 0x00, 0x00, 0x00}, // Vertical line of 'C'
+    {0x38, 0x00, 0x00, 0x00}, // Bottom curve of 'C'
+    };
+
+    PixelBlockType sAtcoLogo = {0,20,25,4};
+    LcdLoadBitmap(&aau8AtcoLogo, &sAtcoLogo);
+
+
     // Display welcome messages on the LCD
-    PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString[] = {"Hello, ATCO Talent"};
-    LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
+    // PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+    // u8 au8TestString[] = {"Hello, ATCO Talent"};
+    // LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
 
-    PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString1[] = {"Acquisition Team,"};
-    LcdLoadString(au8TestString1, LCD_FONT_SMALL, &sTestStringLocation1);
+    // PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
+    // u8 au8TestString1[] = {"Acquisition Team,"};
+    // LcdLoadString(au8TestString1, LCD_FONT_SMALL, &sTestStringLocation1);
 
-    PixelAddressType sTestStringLocation2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString2[] = {"Please enjoy! FT ANT."};
-    LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
+    // PixelAddressType sTestStringLocation2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+    // u8 au8TestString2[] = {"Please enjoy! FT ANT."};
+    // LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
 
     /* Initialize state machine */
     UserApp1_pfStateMachine = UserApp1SM_Idle;
