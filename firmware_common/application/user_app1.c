@@ -66,8 +66,8 @@ void LedSetColorRed(void) {
 
 void LedFlashBlue(u8 led) {
     LedOn(led);
-    LedPWM(led, LED_PWM_10);  // Flash with low brightness
-    DelayMs(100);
+    LedPWM(led, LED_PWM_10);  // Flash with low brightness (blue light)
+    DelayMs(100);             // Flash for 100ms
     LedOff(led);
 }
 
@@ -199,7 +199,8 @@ static void UserApp1SM_Idle(void) {
         }
 
         /* Feedback for match or mismatch */
-        if (Match) {
+        if (Match && !(CandidatePassword[0] == 0 && CandidatePassword[1] == 0 && CandidatePassword[2] == 0 && CandidatePassword[3] == 0)) {
+            // Ensure [0,0,0,0] is never considered valid
             for (u8 i = 0; i < 6; i++) {
                 LedToggle(GREEN3);
                 DelayMs(500);
