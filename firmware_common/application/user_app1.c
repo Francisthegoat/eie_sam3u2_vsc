@@ -21,26 +21,47 @@ static u8 Password[] = {0, 1, 1, 0};                      // Default password
 static u8 CandidatePassword[10];                         // User-entered password
 static u8 PasswordLength = 4;                            // Default password length
 static u8 InputIndex = 0;                                // Track user input index
+static bool InSettingMode = FALSE;                       // Track if setting mode is active
 static bool SettingPassword = FALSE;                     // Flag to track password-setting state
 
 /**********************************************************************************************************************
 LED Color Mixing Functions
 ***********************************************************************************************************************/
-// Your LED color functions...
-
-// Debounce function for buttons
-#define DEBOUNCE_DELAY_MS 50 // Adjust for your system
-bool WasButtonPressedWithDebounce(ButtonNameType button) {   // Fixed type name
-    static u32 lastPressTime[U8_TOTAL_BUTTONS] = {0}; // Store the last press time for each button
-    if (WasButtonPressed(button)) {
-        u32 currentTime = G_u32SystemTime1ms;
-        if ((currentTime - lastPressTime[button]) > DEBOUNCE_DELAY_MS) {
-            lastPressTime[button] = currentTime;
-            return TRUE;  // Button press is valid
-        }
-    }
-    return FALSE;  // Ignore if the debounce time hasn't passed
+void LedSetColorYellow(void) {
+    LedOn(RED3);  
+    LedOn(GREEN3);
+    LedPWM(RED3, LED_PWM_10);  // 50% brightness
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness
+    LedOff(BLUE3);
 }
+
+void LedSetColorGreen(void) {
+    LedOff(RED3);
+    LedOn(GREEN3);
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness
+    LedOff(BLUE3);
+}
+
+void LedSetColorRed(void) {
+    LedOn(RED3);
+    LedPWM(RED3, LED_PWM_10); // 50% brightness
+    LedOff(GREEN3);
+    LedOff(BLUE3);
+}
+
+void LedSetColorWhite(void) {
+    LedOn(RED3);
+    LedOn(GREEN3);
+    LedOn(BLUE3);
+    LedPWM(RED3, LED_PWM_10);  // 50% brightness
+    LedPWM(GREEN3, LED_PWM_10); // 50% brightness
+    LedPWM(BLUE3, LED_PWM_10);  // 50% brightness
+}
+
+// void LedSetColorBlue(LedNameType led) {
+//     LedOn(led);
+//     LedPWM(led, LED_PWM_10); // 50% brightness
+// }
 
 void DelayMs(u32 ms) {
     volatile u32 count;
@@ -54,15 +75,6 @@ void DelayMs(u32 ms) {
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @publicsection */                                                                                             
 /*--------------------------------------------------------------------------------------------------------------------*/
-
-void FlashYellowLED(void) {
-    LedSetColorYellow();
-    DelayMs(500);  // Flash duration
-    LedOff(RED3);
-    LedOff(GREEN3);
-    LedOff(BLUE3); // LED reset
-    DelayMs(500);  // Flash interval
-}
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 /*! @protectedsection */                                                                                             
@@ -89,14 +101,13 @@ void UserApp1Initialize(void) {
         LedOff((LedNameType)i); // Turn off all LEDs
     }
 
-    /* Flash yellow to indicate initialization */
-    FlashYellowLED();  // Flash yellow during initialization
-
     /* Indicate locked state */
     LedSetColorYellow(); // LED3 yellow during locked state
 
     /* Initialize state machine */
     UserApp1_pfStateMachine = UserApp1SM_Idle;
+    LedOn(LCD_BL);
+    LcdClearScreen();
 }
   
 /*!----------------------------------------------------------------------------------------------------------------------
@@ -117,53 +128,36 @@ Promises:
 void UserApp1RunActiveState(void)
 {
   UserApp1_pfStateMachine();
+
 } /* end UserApp1RunActiveState */
 
 /*------------------------------------------------------------------------------------------------------------------*/
 /*! @privatesection */                                                                                             
 /*--------------------------------------------------------------------------------------------------------------------*/
 
+
 /**********************************************************************************************************************
 State Machine Function Definitions
 **********************************************************************************************************************/
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Button module exercise */
-static void UserApp1SM_Error(void) {
-    // Error handling state
-    u8 au8ErrorString[] = {"ERROR: Invalid Input!"};
-    PixelAddressType sErrorStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-    LcdClearScreen(); // Clear the LCD before displaying new message
-    LCD_BACKLIGHT_ON(); // Ensure backlight is on
-    LcdLoadString(au8ErrorString, LCD_FONT_SMALL, &sErrorStringLocation);
-
-    // Blink red to indicate an error
-    LedSetColorRed(); // Red LED for error
-    DelayMs(1000);    // Hold the red LED for a second
-    LedSetColorYellow(); // Reset to normal state
-}
-
 static void UserApp1SM_Idle(void) {
     /* Handle password-setting initiation */
     if (IsButtonHeld(BUTTON0, 3000) && !SettingPassword) {
         SettingPassword = TRUE;
         InputIndex = 0;
         LedSetColorWhite(); // Indicate password-setting mode
-        u8 au8SettingPassword[] = {"Setting Password..."};
-        PixelAddressType sSettingPasswordLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-        LcdClearScreen(); // Clear the LCD before displaying new message
-        LCD_BACKLIGHT_ON(); // Ensure backlight is on
-        LcdLoadString(au8SettingPassword, LCD_FONT_SMALL, &sSettingPasswordLocation);
         return;
     }
 
     /* Handle password input during setting mode */
     if (SettingPassword) {
-        if (WasButtonPressedWithDebounce(BUTTON0)) {
+        if (WasButtonPressed(BUTTON0)) {
             CandidatePassword[InputIndex++] = 0; //sets 0 into the candidate password array
             ButtonAcknowledge(BUTTON0);
         }
 
-        if (WasButtonPressedWithDebounce(BUTTON1)) {
+        if (WasButtonPressed(BUTTON1)) {
             CandidatePassword[InputIndex++] = 1;  //sets 1 into the candidate password array
             ButtonAcknowledge(BUTTON1);
         }
@@ -185,7 +179,7 @@ static void UserApp1SM_Idle(void) {
     }
 
     /* Handle normal password input in locked state */
-    if (WasButtonPressedWithDebounce(BUTTON0)) {
+    if (WasButtonPressed(BUTTON0)) {
         CandidatePassword[InputIndex++] = 0; // Store BUTTON0 press and increment InputIndex
         LedOn(BLUE0);
         LedPWM(BLUE0, LED_PWM_10);
@@ -193,7 +187,7 @@ static void UserApp1SM_Idle(void) {
         ButtonAcknowledge(BUTTON0);         // Clear the button press state
     }
 
-    if (WasButtonPressedWithDebounce(BUTTON1)) {
+    if (WasButtonPressed(BUTTON1)) {
         CandidatePassword[InputIndex++] = 1; // Store BUTTON1 press and increment InputIndex
         LedOn(BLUE1);
         LedPWM(BLUE1, LED_PWM_10);
@@ -227,11 +221,10 @@ static void UserApp1SM_Idle(void) {
                 DelayMs(LED_1HZ);
             }
             LedSetColorGreen(); // Keep LED green after success
-            u8 au8Success[] = {"Success!"};
-            PixelAddressType sSuccessLocation = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
-            LcdClearScreen(); // Clear the LCD before displaying new message
-            LCD_BACKLIGHT_ON(); // Ensure backlight is on
-            LcdLoadString(au8Success, LCD_FONT_SMALL, &sSuccessLocation);
+
+            // Display success text on the LCD screen
+            LcdClearScreen();
+            LcdLoadString(Lcd_au8MessageWelcome, LCD_FONT_SMALL, &sStringLocation);
         } else {
             // Blink red at 1Hz for 3 seconds, then return to yellow
             for (u16 i = 0; i < 6000; i += LED_1HZ) {
@@ -239,20 +232,19 @@ static void UserApp1SM_Idle(void) {
                 DelayMs(LED_1HZ);
             }
             LedSetColorYellow(); // Return to yellow after failure
-            u8 au8Failure[] = {"Access Denied!"};
-            PixelAddressType sFailureLocation = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
-            LcdClearScreen(); // Clear the LCD before displaying new message
-            LCD_BACKLIGHT_ON(); // Ensure backlight is on
-            LcdLoadString(au8Failure, LCD_FONT_SMALL, &sFailureLocation);
 
-            // Trigger the error state after 2 seconds
-            DelayMs(2000);
-            UserApp1_pfStateMachine = UserApp1SM_Error; // Switch to error state
+            // Display failure text on the LCD screen
+            LcdClearScreen();
+            LcdPrintString("Access Denied", 0, 0);
         }
 
         // Reset input for the next attempt
         InputIndex = 0;
     }
+}
+
+static void UserApp1SM_Error(void) {
+    // Error handling state
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
