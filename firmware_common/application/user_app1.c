@@ -18,11 +18,11 @@ Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
 static u8 Password[] = {0, 1, 1, 0};                      // Default password
-static u8 CandidatePassword[10];                         // User-entered password
-static u8 PasswordLength = 4;                            // Default password length
-static u8 InputIndex = 0;                                // Track user input index
-static bool InSettingMode = FALSE;                       // Track if setting mode is active
-static bool SettingPassword = FALSE;                     // Flag to track password-setting state
+static u8 CandidatePassword[10];                           // User-entered password
+static u8 PasswordLength = 4;                              // Default password length
+static u8 InputIndex = 0;                                  // Track user input index
+static bool InSettingMode = FALSE;                         // Track if setting mode is active
+static bool SettingPassword = FALSE;                       // Flag to track password-setting state
 
 /**********************************************************************************************************************
 LED Color Mixing Functions
@@ -78,7 +78,6 @@ void DelayMs(u32 ms) {
 
 /*!--------------------------------------------------------------------------------------------------------------------
 @fn void UserApp1Initialize(void)
-/hello world
 
 @brief
 Initializes the State Machine and its variables.
@@ -124,7 +123,6 @@ Promises:
 void UserApp1RunActiveState(void)
 {
   UserApp1_pfStateMachine();
-
 } /* end UserApp1RunActiveState */
 
 /*------------------------------------------------------------------------------------------------------------------*/
@@ -196,10 +194,16 @@ static void UserApp1SM_Idle(void) {
         InputIndex = 10; // Cap InputIndex at 10 to avoid out-of-bounds errors
     }
 
-        /* Password Verification */
-        if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
-            bool Match = TRUE;
+    /* Password Verification */
+    if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
+        bool Match = TRUE;
 
+        // Ensure InputIndex does not exceed the predefined PasswordLength
+        if (InputIndex > PasswordLength) {
+            // If the user input more than the allowed password length, reset the input
+            InputIndex = 0;  // This will clear the entered password
+            Match = FALSE;   // Set match to FALSE immediately
+        } else {
             // Check if the entered password length matches the stored password length
             if (InputIndex == PasswordLength) {
                 // Compare each element in CandidatePassword with Password
@@ -213,43 +217,43 @@ static void UserApp1SM_Idle(void) {
                 // If the lengths don't match, the passwords are not the same
                 Match = FALSE;
             }
-
-            // If the passwords match, unlock the system
-            if (Match) {
-                // Blink green at 1Hz for 3 seconds
-                for (u16 i = 0; i < 6000; i += LED_1HZ) {
-                    LedToggle(GREEN3);
-                    DelayMs(LED_1HZ);
-                }
-                LedSetColorGreen(); // Keep LED green after success
-
-                // Display success text on the LCD screen
-                PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-                u8 au8TestString[]  = {"SUCCESS!"};  // Shorter test string
-                LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
-
-                DelayMs(500);  // Ensure screen has time to update before continuing
-            } else {
-                // Blink red at 1Hz for 3 seconds, then return to yellow
-                for (u16 i = 0; i < 6000; i += LED_1HZ) {
-                    LedToggle(RED3);
-                    DelayMs(LED_1HZ);
-                }
-                LedSetColorYellow(); // Return to yellow after failure
-
-                // Display failure text on the LCD screen
-                PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-                u8 au8TestString[]  = {"FAILURE!"};  // Shorter test string
-                LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation1);
-
-                DelayMs(500);  // Ensure screen has time to update before continuing
-            }
-
-            // Reset input for the next attempt
-            InputIndex = 0;
         }
-    }
 
+        // If the passwords match, unlock the system
+        if (Match) {
+            // Blink green at 1Hz for 3 seconds
+            for (u16 i = 0; i < 6000; i += LED_1HZ) {
+                LedToggle(GREEN3);
+                DelayMs(LED_1HZ);
+            }
+            LedSetColorGreen(); // Keep LED green after success
+
+            // Display success text on the LCD screen
+            PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8TestString[]  = {"SUCCESS!"};  // Shorter test string
+            LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
+
+            DelayMs(500);  // Ensure screen has time to update before continuing
+        } else {
+            // Blink red at 1Hz for 3 seconds, then return to yellow
+            for (u16 i = 0; i < 6000; i += LED_1HZ) {
+                LedToggle(RED3);
+                DelayMs(LED_1HZ);
+            }
+            LedSetColorYellow(); // Return to yellow after failure
+
+            // Display failure text on the LCD screen
+            PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8TestString[]  = {"FAILURE!"};  // Shorter test string
+            LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation1);
+
+            DelayMs(500);  // Ensure screen has time to update before continuing
+        }
+
+        // Reset input for the next attempt
+        InputIndex = 0;
+    }
+}
 
 static void UserApp1SM_Error(void) {
     // Error handling state
