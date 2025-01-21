@@ -106,8 +106,6 @@ void UserApp1Initialize(void) {
 
     /* Initialize state machine */
     UserApp1_pfStateMachine = UserApp1SM_Idle;
-    LedOn(LCD_BL);  // Ensure the LCD backlight is on
-    LcdClearScreen();
 }
   
 /*!----------------------------------------------------------------------------------------------------------------------
