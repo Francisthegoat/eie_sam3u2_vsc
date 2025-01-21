@@ -4,46 +4,46 @@
 Global variable definitions with scope across the entire project.
 All Global variable names shall start with "G_<type>UserApp1"
 ***********************************************************************************************************************/
-volatile u32 G_u32UserApp1Flags;                          /*!< @brief Global state flags */
+volatile u32 G_u32UserApp1Flags; /*!< @brief Global state flags */
 
 /* Existing variables */
-extern volatile u32 G_u32SystemTime1ms;                   /*!< @brief From main.c */
-extern volatile u32 G_u32SystemTime1s;                    /*!< @brief From main.c */
-extern volatile u32 G_u32SystemFlags;                     /*!< @brief From main.c */
-extern volatile u32 G_u32ApplicationFlags;                /*!< @brief From main.c */
+extern volatile u32 G_u32SystemTime1ms; /*!< @brief From main.c */
+extern volatile u32 G_u32SystemTime1s;  /*!< @brief From main.c */
+extern volatile u32 G_u32SystemFlags;  /*!< @brief From main.c */
+extern volatile u32 G_u32ApplicationFlags; /*!< @brief From main.c */
 
 /***********************************************************************************************************************
 Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
-static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
-static u8 Password[] = {0, 1, 1, 0};                      // Default password
-static u8 CandidatePassword[10];                         // User-entered password
-static u8 PasswordLength = 4;                            // Default password length
-static u8 InputIndex = 0;                                // Track user input index
-static bool SettingPassword = FALSE;                     // Track if setting mode is active
+static fnCode_type UserApp1_pfStateMachine; /*!< @brief The state machine function pointer */
+static u8 Password[10] = {0, 1, 1, 0};     // Default password
+static u8 CandidatePassword[10];          // User-entered password
+static u8 PasswordLength = 4;             // Default password length
+static u8 InputIndex = 0;                 // Track user input index
+static bool SettingPassword = FALSE;      // Flag to track password-setting state
 
-/**********************************************************************************************************************
+/***********************************************************************************************************************
 LED Control Functions
 ***********************************************************************************************************************/
 void LedSetColorYellow(void) {
-    LedOn(RED3);  
+    LedOn(RED3);
     LedOn(GREEN3);
-    LedPWM(RED3, LED_PWM_10);  // 10% brightness
-    LedPWM(GREEN3, LED_PWM_10); // 10% brightness
+    LedPWM(RED3, LED_PWM_50);   // 50% brightness
+    LedPWM(GREEN3, LED_PWM_50); // 50% brightness
     LedOff(BLUE3);
 }
 
 void LedSetColorGreen(void) {
     LedOff(RED3);
     LedOn(GREEN3);
-    LedPWM(GREEN3, LED_PWM_10); // 10% brightness
+    LedPWM(GREEN3, LED_PWM_50); // 50% brightness
     LedOff(BLUE3);
 }
 
 void LedSetColorRed(void) {
     LedOn(RED3);
-    LedPWM(RED3, LED_PWM_10); // 10% brightness
+    LedPWM(RED3, LED_PWM_50); // 50% brightness
     LedOff(GREEN3);
     LedOff(BLUE3);
 }
@@ -52,21 +52,21 @@ void LedSetColorWhite(void) {
     LedOn(RED3);
     LedOn(GREEN3);
     LedOn(BLUE3);
-    LedPWM(RED3, LED_PWM_10);  // 10% brightness
-    LedPWM(GREEN3, LED_PWM_10); // 10% brightness
-    LedPWM(BLUE3, LED_PWM_10);  // 10% brightness
+    LedPWM(RED3, LED_PWM_50);   // 50% brightness
+    LedPWM(GREEN3, LED_PWM_50); // 50% brightness
+    LedPWM(BLUE3, LED_PWM_50);  // 50% brightness
 }
 
 void LedFeedbackButton0(void) {
     LedOn(BLUE0);
-    LedPWM(BLUE0, LED_PWM_10); // 10% brightness for BUTTON0 feedback
+    LedPWM(BLUE0, LED_PWM_50); // Feedback for BUTTON0
     DelayMs(100);
     LedOff(BLUE0);
 }
 
 void LedFeedbackButton1(void) {
     LedOn(BLUE1);
-    LedPWM(BLUE1, LED_PWM_10); // 10% brightness for BUTTON1 feedback
+    LedPWM(BLUE1, LED_PWM_50); // Feedback for BUTTON1
     DelayMs(100);
     LedOff(BLUE1);
 }
@@ -80,9 +80,19 @@ void DelayMs(u32 ms) {
     }
 }
 
-/**********************************************************************************************************************
-User Application Functions
-**********************************************************************************************************************/
+/***********************************************************************************************************************
+Helper Functions
+***********************************************************************************************************************/
+static void ResetCandidatePassword(void) {
+    for (u8 i = 0; i < 10; i++) {
+        CandidatePassword[i] = 0;
+    }
+    InputIndex = 0;
+}
+
+/***********************************************************************************************************************
+State Machine Functions
+***********************************************************************************************************************/
 void UserApp1Initialize(void) {
     for (u8 i = 0; i < U8_TOTAL_LEDS; i++) {
         LedOff((LedNameType)i); // Turn off all LEDs
@@ -90,6 +100,8 @@ void UserApp1Initialize(void) {
 
     /* Indicate locked state */
     LedSetColorYellow(); // LED3 yellow during locked state
+    ResetCandidatePassword();
+
     LedOn(LCD_BL);  // Ensure the LCD backlight is on
     LcdClearScreen();
 
@@ -117,7 +129,7 @@ static void UserApp1SM_Idle(void) {
     /* Handle password-setting initiation */
     if (IsButtonHeld(BUTTON0, 3000) && !SettingPassword) {
         SettingPassword = TRUE;
-        InputIndex = 0;
+        ResetCandidatePassword();
         LedSetColorWhite(); // Indicate password-setting mode
         return;
     }
@@ -136,8 +148,9 @@ static void UserApp1SM_Idle(void) {
             ButtonAcknowledge(BUTTON1);
         }
 
+        /* Prevent overflow */
         if (InputIndex >= 10) {
-            InputIndex = 10; // Prevent overflow
+            InputIndex = 10;
         }
 
         /* Finish password-setting when BUTTON0 is held again for 3 seconds */
@@ -146,7 +159,7 @@ static void UserApp1SM_Idle(void) {
                 Password[i] = CandidatePassword[i];
             }
             PasswordLength = InputIndex;
-            SettingPassword = FALSE; // Exit setting mode
+            SettingPassword = FALSE;
             LedSetColorYellow(); // Return to locked state
         }
         return;
@@ -154,30 +167,31 @@ static void UserApp1SM_Idle(void) {
 
     /* Handle normal password input in locked state */
     if (WasButtonPressed(BUTTON0)) {
-        CandidatePassword[InputIndex++] = 0; // Store BUTTON0 press and increment InputIndex
+        CandidatePassword[InputIndex++] = 0;
         LedFeedbackButton0();
-        ButtonAcknowledge(BUTTON0);         // Clear the button press state
+        ButtonAcknowledge(BUTTON0);
     }
 
     if (WasButtonPressed(BUTTON1)) {
-        CandidatePassword[InputIndex++] = 1; // Store BUTTON1 press and increment InputIndex
+        CandidatePassword[InputIndex++] = 1;
         LedFeedbackButton1();
-        ButtonAcknowledge(BUTTON1);         // Clear the button press state
+        ButtonAcknowledge(BUTTON1);
     }
 
-    /* Prevent overflow (limit inputs to a maximum of 10) */
+    /* Prevent overflow */
     if (InputIndex >= 10) {
-        InputIndex = 10; // Cap InputIndex at 10 to avoid out-of-bounds errors
+        InputIndex = 10;
     }
 
-    /* Password Verification */
-    if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
+    /* Password verification */
+    if (IsButtonHeld(BUTTON0, 750) && IsButtonHeld(BUTTON1, 750)) {
         bool Match = TRUE;
 
-        // Check password length and values
+        /* Check password length */
         if (InputIndex != PasswordLength) {
             Match = FALSE;
         } else {
+            /* Check password values */
             for (u8 i = 0; i < PasswordLength; i++) {
                 if (CandidatePassword[i] != Password[i]) {
                     Match = FALSE;
@@ -186,23 +200,25 @@ static void UserApp1SM_Idle(void) {
             }
         }
 
+        /* Feedback for match or mismatch */
         if (Match) {
-            // Blink green at 1Hz for 3 seconds
-            for (u16 i = 0; i < 6; i++) {
+            for (u8 i = 0; i < 6; i++) {
                 LedToggle(GREEN3);
                 DelayMs(500);
             }
-            LedSetColorGreen(); // Keep LED green after success
+            LedSetColorGreen();
         } else {
-            // Blink red at 1Hz for 3 seconds, then return to yellow
-            for (u16 i = 0; i < 6; i++) {
+            for (u8 i = 0; i < 6; i++) {
                 LedToggle(RED3);
                 DelayMs(500);
             }
-            LedSetColorYellow(); // Return to yellow after failure
+            LedSetColorYellow();
         }
 
-        // Reset input for the next attempt
-        InputIndex = 0;
+        ResetCandidatePassword();
     }
+}
+
+static void UserApp1SM_Error(void) {
+    /* Error handling state */
 }
