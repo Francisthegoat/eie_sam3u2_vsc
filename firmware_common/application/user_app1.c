@@ -107,8 +107,16 @@ void UserApp1Initialize(void) {
     LcdClearScreen();
 
     PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString[] = {"Hello, ATCO Talent Acquisition Team!!! Enjoy the demo!"};
+    u8 au8TestString[] = {"Hello, ATCO Talent"};
     LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
+
+    PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8TestString1[] = {"Acquisition Team,"};
+    LcdLoadString(au8TestString1, LCD_FONT_SMALL, &sTestStringLocation1);
+
+    PixelAddressType sTestStringLocation2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8TestString2[] = {"Please enjoy! FT ANT."};
+    LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
 
     /* Initialize state machine */
     UserApp1_pfStateMachine = UserApp1SM_Idle;
