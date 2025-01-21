@@ -214,17 +214,15 @@ static void UserApp1SM_Idle(void) {
 
     /* Password Verification */
     if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
-        for( u8 i = 0 ; i < PasswordLength; i++)
-        Password == CandidatePassword;
-            bool Match = TRUE;
+        bool Match = TRUE;
 
         // Check password length and values
         for (u8 i = 0; i < PasswordLength; i++) {
             if (CandidatePassword[i] != Password[i]) {
                 Match = FALSE;
-                    break;
-                }
+                break;
             }
+        }
 
         if (Match) {
             // Blink green at 1Hz for 3 seconds
@@ -242,7 +240,7 @@ static void UserApp1SM_Idle(void) {
                 DelayMs(LED_1HZ);
             }
             LedSetColorYellow(); // Return to yellow after failure
-            // ascess denied code displaying intruder.
+            // access denied code displaying intruder.
         }
 
         // Reset input for the next attempt
