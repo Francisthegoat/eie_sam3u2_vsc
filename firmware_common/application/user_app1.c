@@ -103,6 +103,12 @@ void UserApp1Initialize(void) {
 
     /* Indicate locked state */
     LedSetColorYellow(); // LED3 yellow during locked state
+    LedOn(LCD_BL);  // Ensure the LCD backlight is on
+    LcdClearScreen();
+
+    PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8TestString[] = {"Hello, ATCO Talent Acquisition Team!!! Enjoy the demo!"};
+    LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
 
     /* Initialize state machine */
     UserApp1_pfStateMachine = UserApp1SM_Idle;
