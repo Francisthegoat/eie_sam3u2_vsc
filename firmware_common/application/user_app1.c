@@ -18,16 +18,15 @@ Variable names shall start with "UserApp1_<type>" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_pfStateMachine;               /*!< @brief The state machine function pointer */
 static u8 Password[] = {0, 1, 1, 0};                      // Default password
-static u8 CandidatePassword[10];                           // User-entered password
-static u8 PasswordLength = 4;                              // Default password length
-static u8 InputIndex = 0;                                  // Track user input index
-static bool InSettingMode = FALSE;                         // Track if setting mode is active
-static bool SettingPassword = FALSE;                       // Flag to track password-setting state
+static u8 CandidatePassword[10];                         // User-entered password
+static u8 PasswordLength = 4;                            // Default password length
+static u8 InputIndex = 0;                                // Track user input index
+static bool InSettingMode = FALSE;                       // Track if setting mode is active
+static bool SettingPassword = FALSE;                     // Flag to track password-setting state
 
 /**********************************************************************************************************************
 LED Color Mixing Functions
 ***********************************************************************************************************************/
-
 void LedSetColorYellow(void) {
     LedOn(RED3);  
     LedOn(GREEN3);
@@ -59,6 +58,11 @@ void LedSetColorWhite(void) {
     LedPWM(BLUE3, LED_PWM_10);  // 50% brightness
 }
 
+// void LedSetColorBlue(LedNameType led) {
+//     LedOn(led);
+//     LedPWM(led, LED_PWM_10); // 50% brightness
+// }
+
 void DelayMs(u32 ms) {
     volatile u32 count;
     while (ms--) {
@@ -78,6 +82,7 @@ void DelayMs(u32 ms) {
 
 /*!--------------------------------------------------------------------------------------------------------------------
 @fn void UserApp1Initialize(void)
+/hello world
 
 @brief
 Initializes the State Machine and its variables.
@@ -123,7 +128,9 @@ Promises:
 void UserApp1RunActiveState(void)
 {
   UserApp1_pfStateMachine();
+
 } /* end UserApp1RunActiveState */
+
 
 /*------------------------------------------------------------------------------------------------------------------*/
 /*! @privatesection */                                                                                             
@@ -194,53 +201,37 @@ static void UserApp1SM_Idle(void) {
         InputIndex = 10; // Cap InputIndex at 10 to avoid out-of-bounds errors
     }
 
-        /* Password Verification */
+    /* Password Verification */
     if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
         bool Match = TRUE;
 
-        // Check if the entered password length is valid (matches stored password length)
-        if (InputIndex > PasswordLength) {
-            // If the input exceeds the expected length, reset and consider it invalid
-            InputIndex = 0; // Clear the entered password
-            Match = FALSE;  // Mark as not matched
-        } else {
-            // If lengths match, compare each digit
-            if (InputIndex == PasswordLength) {
-                for (u8 i = 0; i < PasswordLength; i++) {
-                    if (CandidatePassword[i] != Password[i]) {
-                        Match = FALSE;  // Set to false if there's a mismatch
-                        break;  // Exit early if a mismatch is found
-                    }
+        // Check password length and values
+        if (InputIndex == PasswordLength) {
+            for (u8 i = 0; i < PasswordLength; i++) {
+                if (CandidatePassword[i] != Password[i]) {
+                    Match = FALSE;
+                    break;
                 }
-            } else {
-                // If lengths don't match, the passwords are invalid
-                Match = FALSE;
             }
         }
 
-        // If the passwords match
         if (Match) {
             // Blink green at 1Hz for 3 seconds
             for (u16 i = 0; i < 6000; i += LED_1HZ) {
                 LedToggle(GREEN3);
                 DelayMs(LED_1HZ);
             }
-            LedSetColorGreen(); // Turn LED green after success
-            // Optionally show success message on the LCD screen
-            PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-            u8 au8TestString[] = {"SUCCESS!"};
-            LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
+            LedSetColorGreen(); // Keep LED green after success
+            // welcome code displaying name.
+
         } else {
             // Blink red at 1Hz for 3 seconds, then return to yellow
             for (u16 i = 0; i < 6000; i += LED_1HZ) {
                 LedToggle(RED3);
                 DelayMs(LED_1HZ);
             }
-            LedSetColorYellow(); // Return to locked state after failure
-            // Optionally show failure message on the LCD screen
-            PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-            u8 au8TestString[] = {"FAILURE!"};
-            LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation1);
+            LedSetColorYellow(); // Return to yellow after failure
+            // ascess denied code displaying intruder.
         }
 
         // Reset input for the next attempt
