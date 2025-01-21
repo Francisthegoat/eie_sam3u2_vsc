@@ -196,54 +196,60 @@ static void UserApp1SM_Idle(void) {
         InputIndex = 10; // Cap InputIndex at 10 to avoid out-of-bounds errors
     }
 
-    /* Password Verification */
-    if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
-        bool Match = TRUE;
+        /* Password Verification */
+        if (IsButtonHeld(BUTTON0, 500) && IsButtonHeld(BUTTON1, 500)) {
+            bool Match = TRUE;
 
-        // Check password length and values
-        if (InputIndex == PasswordLength) {
-            for (u8 i = 0; i < PasswordLength; i++) {
-                if (CandidatePassword[i] != Password[i]) {
-                    Match = FALSE;
-                    break;
+            // Check if the entered password length matches the stored password length
+            if (InputIndex == PasswordLength) {
+                // Compare each element in CandidatePassword with Password
+                for (u8 i = 0; i < PasswordLength; i++) {
+                    if (CandidatePassword[i] != Password[i]) {
+                        Match = FALSE;  // If there's a mismatch, set Match to FALSE
+                        break;  // Exit the loop early since we found a mismatch
+                    }
                 }
+            } else {
+                // If the lengths don't match, the passwords are not the same
+                Match = FALSE;
             }
+
+            // If the passwords match, unlock the system
+            if (Match) {
+                // Blink green at 1Hz for 3 seconds
+                for (u16 i = 0; i < 6000; i += LED_1HZ) {
+                    LedToggle(GREEN3);
+                    DelayMs(LED_1HZ);
+                }
+                LedSetColorGreen(); // Keep LED green after success
+
+                // Display success text on the LCD screen
+                PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+                u8 au8TestString[]  = {"SUCCESS!"};  // Shorter test string
+                LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
+
+                DelayMs(500);  // Ensure screen has time to update before continuing
+            } else {
+                // Blink red at 1Hz for 3 seconds, then return to yellow
+                for (u16 i = 0; i < 6000; i += LED_1HZ) {
+                    LedToggle(RED3);
+                    DelayMs(LED_1HZ);
+                }
+                LedSetColorYellow(); // Return to yellow after failure
+
+                // Display failure text on the LCD screen
+                PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+                u8 au8TestString[]  = {"FAILURE!"};  // Shorter test string
+                LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation1);
+
+                DelayMs(500);  // Ensure screen has time to update before continuing
+            }
+
+            // Reset input for the next attempt
+            InputIndex = 0;
         }
-
-        if (Match) {
-            // Blink green at 1Hz for 3 seconds
-            for (u16 i = 0; i < 6000; i += LED_1HZ) {
-                LedToggle(GREEN3);
-                DelayMs(LED_1HZ);
-            }
-            LedSetColorGreen(); // Keep LED green after success
-
-            // Display success text on the LCD screen
-            PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-            u8 au8TestString[]  = {"SUCCESS!"};  // Shorter test string
-            LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
-
-            DelayMs(500);  // Ensure screen has time to update before continuing
-        } else {
-            // Blink red at 1Hz for 3 seconds, then return to yellow
-            for (u16 i = 0; i < 6000; i += LED_1HZ) {
-                LedToggle(RED3);
-                DelayMs(LED_1HZ);
-            }
-            LedSetColorYellow(); // Return to yellow after failure
-
-            // Display failure text on the LCD screen
-            PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-            u8 au8TestString[]  = {"FAILURE!"};  // Shorter test string
-            LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation1);
-
-            DelayMs(500);  // Ensure screen has time to update before continuing
-        }
-
-        // Reset input for the next attempt
-        InputIndex = 0;
     }
-}
+
 
 static void UserApp1SM_Error(void) {
     // Error handling state
