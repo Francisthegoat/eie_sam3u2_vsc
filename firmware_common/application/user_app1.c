@@ -1,4 +1,6 @@
 #include "configuration.h"
+void DelayMs(u32 timems);
+
 
 /***********************************************************************************************************************
 Global variable definitions with scope across the entire project.
@@ -35,11 +37,11 @@ void LedSetColorWhite(void) {
 }
 
 void LedSetColorPurple(void) {
-    LedOn(RED3);  
-    LedOn(GREEN3);
-    LedPWM(RED3, LED_PWM_10);  // 50% brightness for RED
-    LedPWM(GREEN3, LED_PWM_10); // 50% brightness for GREEN
-    LedOff(BLUE3); // Ensure BLUE is off
+    LedOn(RED2);  
+    LedOn(GREEN2);
+    LedPWM(RED2, LED_PWM_10);  // 50% brightness for RED
+    LedPWM(GREEN2, LED_PWM_10); // 50% brightness for GREEN
+    LedOff(BLUE2); // Ensure BLUE is off
 }
 
 void LedSetColorYellow(void) {
@@ -84,9 +86,9 @@ static void ResetCandidatePassword(void) {
 /***********************************************************************************************************************
 Delay Function
 ***********************************************************************************************************************/
-void DelayMs(u32 ms) {
+void DelayMs(u32 timems) {
     volatile u32 count;
-    while (ms--) {
+    while (timems--) {
         for (count = 0; count < 8000; count++) {
             __asm("nop"); // No-operation instruction for a simple delay
         }
@@ -226,25 +228,22 @@ static void UserApp1SM_Idle(void) {
         return;
     }
 
-    /* Handle normal password input in locked state */
-    if (WasButtonPressed(BUTTON0)) {
-        CandidatePassword[InputIndex++] = 0;
-        LedSetColorGreen(); // Feedback for button 0 press
-        ButtonAcknowledge(BUTTON0);
+    /* Handle password input in locked state */
+    if (InputIndex < 4) {
+        if (WasButtonPressed(BUTTON0)) {
+            CandidatePassword[InputIndex++] = 0;
+            LedFlashBlue(BLUE0); // Feedback for Button0 press (blue on LED0)
+            ButtonAcknowledge(BUTTON0);
+        }
+
+        if (WasButtonPressed(BUTTON1)) {
+            CandidatePassword[InputIndex++] = 1;
+            LedFlashBlue(BLUE1); // Feedback for Button1 press (blue on LED1)
+            ButtonAcknowledge(BUTTON1);
+        }
     }
 
-    if (WasButtonPressed(BUTTON1)) {
-        CandidatePassword[InputIndex++] = 1;
-        LedSetColorRed(); // Feedback for button 1 press
-        ButtonAcknowledge(BUTTON1);
-    }
-
-    /* Prevent overflow */
-    if (InputIndex >= 4) {
-        InputIndex = 4;
-    }
-
-    /* Automatic password verification after 4 inputs */
+    /* If 4 digits entered, check password */
     if (InputIndex == 4) {
         bool Match = TRUE;
 
@@ -257,24 +256,83 @@ static void UserApp1SM_Idle(void) {
         }
 
         /* Feedback for match or mismatch */
-        if (Match && !(CandidatePassword[0] == 0 && CandidatePassword[1] == 0 && CandidatePassword[2] == 0 && CandidatePassword[3] == 0)) {
-            // Ensure [0,0,0,0] is never considered valid
-            for (u8 i = 0; i < 6; i++) {
-                LedToggle(GREEN3);
-                DelayMs(500);
-            }
-            LedSetColorGreen();
-        } else {
-            for (u8 i = 0; i < 6; i++) {
-                LedToggle(RED3);
-                DelayMs(500);
-            }
-            LedSetColorYellow();
-        }
+    // Feedback for match or mismatch
+    if (Match) {
 
-        ResetCandidatePassword();
+        // Display success message on LCD
+        LcdClearScreen();
+        PixelAddressType sSuccessLocation = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8SuccessMessage[] = {"Success"};
+        LcdLoadString(au8SuccessMessage, LCD_FONT_SMALL, &sSuccessLocation);
+
+        LedSetColorGreen(); // Flash green on LED3 to indicate password is correct
+
+    } else {
+        // Display denied message on LCD
+        LcdClearScreen();
+        PixelAddressType sDeniedLocation = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8DeniedMessage[] = {"Denied"};
+        LcdLoadString(au8DeniedMessage, LCD_FONT_SMALL, &sDeniedLocation);
+
+        LedSetColorRed(); // Flash red on LED3 to indicate password is incorrect
+
+    }
+
+// Reset after checking
+ResetCandidatePassword();
+
     }
 }
+
+//     // /* Handle normal password input in locked state */
+//     // if (WasButtonPressed(BUTTON0)) {
+//     //     CandidatePassword[InputIndex++] = 0;
+//     //     LedSetColorGreen(); // Feedback for button 0 press
+//     //     ButtonAcknowledge(BUTTON0);
+//     // }
+
+//     // if (WasButtonPressed(BUTTON1)) {
+//     //     CandidatePassword[InputIndex++] = 1;
+//     //     LedSetColorRed(); // Feedback for button 1 press
+//     //     ButtonAcknowledge(BUTTON1);
+//     // }
+
+//     // /* Prevent overflow */
+//     // if (InputIndex >= 4) {
+//     //     InputIndex = 4;
+//     // }
+
+//     // /* Automatic password verification after 4 inputs */
+//     // if (InputIndex == 4) {
+//     //     bool Match = TRUE;
+
+//         /* Check password values */
+//         for (u8 i = 0; i < 4; i++) {
+//             if (CandidatePassword[i] != Password[i]) {
+//                 Match = FALSE;
+//                 break;
+//             }
+//         }
+
+//         /* Feedback for match or mismatch */
+//         if (Match) {
+//             // Ensure [0,0,0,0] is never considered valid
+//             for (u8 i = 0; i < 6; i++) {
+//                 LedToggle(GREEN3);
+//                 DelayMs(500);
+//             }
+//             LedSetColorGreen();
+//         } else {
+//             for (u8 i = 0; i < 6; i++) {
+//                 LedToggle(RED3);
+//                 DelayMs(500);
+//             }
+//             LedSetColorYellow();
+//         }
+
+//         ResetCandidatePassword();
+//     }
+// }
 
 /*************  ✨ Codeium Command ⭐  *************/
 /**
