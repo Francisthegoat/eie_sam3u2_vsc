@@ -21,7 +21,8 @@ Variable names shall start with "UserApp1_<type>" and be declared as static.
 static fnCode_type UserApp1_pfStateMachine; /*!< @brief The state machine function pointer */
 static u8 Password[4] = {0, 1, 1, 0};     // Default password with 4 inputs
 static u8 CandidatePassword[4];          // User-entered password
-static u8 InputIndex = 0;                 // Track user input index
+static u8 InputIndex = 0;
+static u8 NewPassword[4];                 // Track user input index
 static bool SettingPassword = FALSE;      // Flag to track password-setting state
 
 /***********************************************************************************************************************
@@ -96,6 +97,12 @@ static void ResetCandidatePassword(void) {
         CandidatePassword[i] = 0;
     }
     InputIndex = 0;
+}
+
+static void ResetNewPassword(void) {
+    for (u8 i = 0; i < 4; i++) {
+        NewPassword[i] = 0;
+    }
 }
 
 /***********************************************************************************************************************
@@ -230,19 +237,16 @@ static void UserApp1SM_Idle(void) {
         /* Prevent overflow */
         if (InputIndex >= 4) {
             InputIndex = 4;
-        }
 
-        /* Finish password-setting when BUTTON0 is held again for 3 seconds */
-        if (IsButtonHeld(BUTTON0, 3000)) {
+            /* Automatically store the new password when 4 inputs are entered */
             for (u8 i = 0; i < InputIndex; i++) {
                 Password[i] = CandidatePassword[i];
             }
-            SettingPassword = FALSE;
+            SettingPassword = FALSE; // Exit setting mode
             LedSetColorPurple(); // Flash purple on LED3 to indicate new password has been set
             DelayMs(1000);  // Delay for visual effect
-            LedSetColorYellow(); // Return to the locked state (yellow)
+            LedSetColorYellow(); // Return to locked state (yellow)
             ResetCandidatePassword(); // Reset for next input
-            return;  // Go back to idle state after password setting
         }
         return;  // Remain in password setting mode until completed
     }
