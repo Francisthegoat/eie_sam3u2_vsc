@@ -371,11 +371,11 @@ static void UserApp1SM_Idle(void) {
             // Display denied message on LCD
             LcdClearScreen();
             PixelAddressType sDeniedLocation = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
-            u8 au8DeniedMessage[] = {"Ascess denied !!! "};
+            u8 au8DeniedMessage[] = {"Ascess denied, "};
             LcdLoadString(au8DeniedMessage, LCD_FONT_SMALL, &sDeniedLocation);
 
-            PixelAddressType sDeniedLocation1 = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
-            u8 au8DeniedMessage1[] = {"Ip Flagged !"};
+            PixelAddressType sDeniedLocation1 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8DeniedMessage1[] = {"Ip Flagged !!!"};
             LcdLoadString(au8DeniedMessage1, LCD_FONT_SMALL, &sDeniedLocation1);
 
             LedSetColorRed(); // Flash red on LED3 to indicate password is incorrect
