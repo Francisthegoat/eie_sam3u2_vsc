@@ -24,6 +24,7 @@ static u8 CandidatePassword[4];          // User-entered password
 static u8 InputIndex = 0;
 static u8 NewPassword[4];                 // Track user input index
 static bool SettingPassword = FALSE;      // Flag to track password-setting state
+static i;     
 
 /***********************************************************************************************************************
 LED Control Functions
@@ -35,6 +36,7 @@ void LedSetColorWhite(void) {
     LedPWM(RED3, LED_PWM_10);  // 50% brightness for RED
     LedPWM(GREEN3, LED_PWM_10); // 50% brightness for GREEN
     LedPWM(BLUE3, LED_PWM_10);  // 50% brightness for BLUE
+
 }
 
 void LedSetColorPurple(void) {
@@ -212,12 +214,11 @@ void UserApp1RunActiveState(void) {
 }
 
 static void UserApp1SM_Idle(void) {
+    
+    
     /* Handle password-setting initiation */
     if (IsButtonHeld(BUTTON0, 3000) && !SettingPassword) {
-        SettingPassword = TRUE;
-        ResetCandidatePassword();
-        LedSetColorWhite(); // Flash white on LED3 to enter password setting mode
-        return;
+    UserApp1_pfStateMachine = password_set;   
     }
 
     /* Handle password input during setting mode */
@@ -371,6 +372,17 @@ static void UserApp1SM_Idle(void) {
             LedSetColorGreen(); // Flash green on LED3 to indicate password is correct
             DelayMs(100);  // Visual feedback delay
             LedSetColorYellow(); // Return to locked state
+
+            DelayMs(2000);
+            LcdClearScreen();
+            PixelAddressType welcome = {U8_LCD_SMALL_FONT_LINE4, U16_LCD_LEFT_MOST_COLUMN};
+            u8 welcomemessage[] = {"Welcome to the game,"};
+            LcdLoadString(welcomemessage, LCD_FONT_SMALL, &welcome);   
+            
+            
+
+
+
         } else {
             // Display denied message on LCD
             LcdClearScreen();
@@ -390,6 +402,43 @@ static void UserApp1SM_Idle(void) {
         // Reset after checking
         ResetCandidatePassword();
     }
+}
+
+static void password_set(void) {
+      /* Handle password-setting initiation */
+if (IsButtonHeld(BUTTON0, 3000) && !SettingPassword) {
+    SettingPassword = TRUE;
+    ResetCandidatePassword();
+    LedSetColorWhite(); // Flash white on LED3 to enter password setting mode  
+}
+
+if (WasButtonPressed(BUTTON0)) {
+        CandidatePassword[InputIndex++] = 0;
+        LedFlashBlue(BLUE0); // Feedback for Button0 press (blue on LED0)
+        ButtonAcknowledge(BUTTON0);
+    }
+
+if (WasButtonPressed(BUTTON1)) {
+    CandidatePassword[InputIndex++] = 1;
+    LedFlashBlue(BLUE1); // Feedback for Button1 press (blue on LED1)
+    ButtonAcknowledge(BUTTON1);
+}
+
+/* Prevent overflow */
+if (InputIndex >= 4) {
+    InputIndex = 4;
+
+    /* Automatically store the new password when 4 inputs are entered */
+    for (u8 i = 0; i < InputIndex; i++) {
+        Password[i] = CandidatePassword[i];
+    }
+    SettingPassword = FALSE; // Exit setting mode
+    DelayMs(1000);  // Delay for visual effect
+    LedSetColorYellow(); // Return to locked state (yellow)
+    ResetCandidatePassword(); // Reset for next input
+}
+return;  // Remain in password setting mode until completed
+
 }
 
 /*************  ✨ Codeium Command ⭐  *************/
