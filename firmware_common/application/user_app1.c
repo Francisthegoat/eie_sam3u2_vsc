@@ -209,6 +209,10 @@ void UserApp1Initialize(void) {
 
 void userApppasswordset(void) {
     LedSetColorWhite(); // Flash white on LED3 to enter password setting mode
+    LcdClearScreen();
+    PixelAddressType sSetpasswordstring = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8Setpasswordstring[] = {"Create a new password"};
+    LcdLoadString(au8Setpasswordstring, LCD_FONT_SMALL, &sSetpasswordstring);
 
     if(InputIndex < 4){
         if (WasButtonPressed(BUTTON0)) {
@@ -233,7 +237,18 @@ void userApppasswordset(void) {
         }
         SettingPassword = FALSE; // Exit setting mode
         Led2SetColorYellow(); // Flash purple on LED3 to indicate new password has been set
-        DelayMs(1000);  // Delay for visual effect
+
+        // Display success message on LCD
+        LcdClearScreen();
+        PixelAddressType sSetpasswordcreated = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Setpasswordcreation[] = {"Creation successful,"};
+        LcdLoadString(au8Setpasswordcreation, LCD_FONT_SMALL, &sSetpasswordcreated);
+
+        PixelAddressType sSetpasswordcreated1 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Setpasswordcreation1[] = {"Please proceed!"};
+        LcdLoadString(au8Setpasswordcreation1, LCD_FONT_SMALL, &sSetpasswordcreated1);
+
+        DelayMs(500);  // Delay for visual effect
         LedSetColorYellow(); // Return to locked state (yellow)
         ResetCandidatePassword(); // Reset for next input
         UserApp1_pfStateMachine = UserApp1SM_Idle;
@@ -339,11 +354,11 @@ void userApppasswordincorrect(void) {
     // Display denied message on LCD
     LcdClearScreen();
     PixelAddressType sDeniedLocation = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8DeniedMessage[] = {"Ascess denied, "};
+    u8 au8DeniedMessage[] = {"    Ascess denied, "};
     LcdLoadString(au8DeniedMessage, LCD_FONT_SMALL, &sDeniedLocation);
 
     PixelAddressType sDeniedLocation1 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8DeniedMessage1[] = {"Ip Flagged !!!"};
+    u8 au8DeniedMessage1[] = {"    Ip Flagged !!!"};
     LcdLoadString(au8DeniedMessage1, LCD_FONT_SMALL, &sDeniedLocation1);
 
     LedSetColorRed(); // Flash red on LED3 to indicate password is incorrect
