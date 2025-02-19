@@ -48,7 +48,12 @@ void UserApp1RunActiveState(void);
 State Machine Declarations
 ***********************************************************************************************************************/
 static void UserApp1SM_Idle(void);    
-static void UserApp1SM_Error(void);         
+static void UserApp1SM_Error(void);
+static void userApppasswordset(void);
+static void UserAppGamelevel1(void);
+static void UserAppGamelevel2(void);
+static void UserAppEndGame(void);
+
 
 
 

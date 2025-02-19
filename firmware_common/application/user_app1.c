@@ -24,6 +24,12 @@ static u8 CandidatePassword[4];          // User-entered password
 static u8 InputIndex = 0;
 static u8 NewPassword[4];                 // Track user input index
 static bool SettingPassword = FALSE;      // Flag to track password-setting state
+static Level1clk ;
+static clear;                     // Track level 1 clock count
+static u8 Binarycount[3];
+static u8 Binarycountcheck[3];
+//static level2clk ;                     // Track level 2 clock count
+//static Endgameclk ;                     // Track endgame clock count
 
 /***********************************************************************************************************************
 LED Control Functions
@@ -257,7 +263,10 @@ void userApppasswordset(void) {
 }
 
 void userApppasswordcorrect(void) {
+    // Reset after checking
+    ResetCandidatePassword();
     // Display success message on LCD
+
     LcdClearScreen();
 
     const u8 Atco2[U8_LCD_IMAGE_ROW_SIZE_50PX][U8_LCD_IMAGE_COL_BYTES_50PX] = {
@@ -348,9 +357,13 @@ void userApppasswordcorrect(void) {
     LedSetColorGreen(); // Flash green on LED3 to indicate password is correct
     DelayMs(100);  // Visual feedback delay
     LedSetColorYellow(); // Return to locked state
+
+    UserApp1_pfStateMachine = UserAppGamelevel1; // enter level 1.
 }
 
 void userApppasswordincorrect(void) {
+    // Reset after checking
+    ResetCandidatePassword();
     // Display denied message on LCD
     LcdClearScreen();
     PixelAddressType sDeniedLocation = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
@@ -366,6 +379,89 @@ void userApppasswordincorrect(void) {
     LedSetColorYellow(); // Return to locked state
 }
 
+static void UserAppGamelevel1(void) {
+    Level1clk++;
+
+    // Display messages based on timing
+    if (Level1clk == 3000 && clear == 0) {
+        LcdClearScreen();
+        PixelAddressType sWelcometothegame = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Welcometothegame[] = {"Welcome to the game!!"};
+        LcdLoadString(au8Welcometothegame, LCD_FONT_SMALL, &sWelcometothegame);
+        clear = 1;
+    }
+
+    if (Level1clk == 6000 && clear == 1) {
+        LcdClearScreen();
+        PixelAddressType sLevel1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Level1[] = {"     ---Level 1---"};
+        LcdLoadString(au8Level1, LCD_FONT_SMALL, &sLevel1);
+
+        PixelAddressType sLevel1_2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Level1_2[] = {"Count in uint 0 to 7"};
+        LcdLoadString(au8Level1_2, LCD_FONT_SMALL, &sLevel1_2);
+
+        PixelAddressType sLevel1_3 = {U8_LCD_SMALL_FONT_LINE4, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Level1_3[] = {" Button(0,1) = 0,1"};
+        LcdLoadString(au8Level1_3, LCD_FONT_SMALL, &sLevel1_3);
+    }
+
+    // Reset clock after displaying messages
+    if (Level1clk >= 6000) {
+        Level1clk = 0;
+    }
+
+    // Handle binary input (0-7)
+    if (WasButtonPressed(BUTTON0)) {
+        if (InputIndex < 3) {  // Ensure we don't go out of bounds
+            Binarycount[InputIndex++] = 0;
+            LedFlashBlue(BLUE0); // Feedback for Button0 press
+            ButtonAcknowledge(BUTTON0);
+        }
+    }
+
+    if (WasButtonPressed(BUTTON1)) {
+        if (InputIndex < 3) {  // Ensure we don't go out of bounds
+            Binarycount[InputIndex++] = 1;
+            LedFlashBlue(BLUE1); // Feedback for Button1 press
+            ButtonAcknowledge(BUTTON1);
+        }
+    }
+
+    // When 3 bits are entered, process input
+    if (InputIndex >= 3) {
+        // Copy user input for verification
+        for (int i = 0; i < 3; i++) {
+            Binarycountcheck[i] = Binarycount[i];
+        }
+
+        // Convert binary array to decimal
+        int decimalValue = (Binarycountcheck[0] << 2) | 
+                           (Binarycountcheck[1] << 1) | 
+                           (Binarycountcheck[2] << 0);
+
+        // Print decimal value on LCD
+        // Example action: Clear screen if user inputs "000" (0 in decimal)
+        int i = 0;
+        if (decimalValue == 0 && i == 0) {
+            PixelAddressType sbinarycountnumber0 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber0[] = {" 000 = 0... Correct."};
+            LcdLoadString(au8sbinarycountnumber0, LCD_FONT_SMALL, &sbinarycountnumber0);
+        }
+
+        // Reset input index for the next number
+        InputIndex = 0;
+    }
+}
+
+// static void UserAppGamelevel2(void) {
+
+// }
+
+// static void UserAppEndGame(void) {
+
+// }
+
 void UserApp1RunActiveState(void) {
     UserApp1_pfStateMachine();
 }
@@ -373,7 +469,6 @@ void UserApp1RunActiveState(void) {
 static void UserApp1SM_Idle(void) {
     /* Handle password-setting initiation */
     if (IsButtonHeld(BUTTON0, 3000) && !SettingPassword) {
-        userApppasswordset();
         ResetCandidatePassword();
         UserApp1_pfStateMachine = userApppasswordset;
         return;
@@ -408,13 +503,10 @@ static void UserApp1SM_Idle(void) {
 
         /* Feedback for match or mismatch */
         if (Match) {
-            userApppasswordcorrect();
+            UserApp1_pfStateMachine =  userApppasswordcorrect;
         } else {
             userApppasswordincorrect();
         }
-
-        // Reset after checking
-        ResetCandidatePassword();
     }
 }
 
