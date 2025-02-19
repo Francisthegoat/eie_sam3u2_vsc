@@ -1,5 +1,45 @@
 #include "configuration.h"
 void DelayMs(u32 timems);
+// Minimal implementations for embedded systems (placeholder functions)
+void _kill(int pid, int sig) {
+    // Do nothing or add your custom implementation if needed
+    while (1);  // Infinite loop to "kill" the program
+}
+
+int _getpid(void) {
+    return 1;  // Return a dummy process ID
+}
+
+int _fstat(int fd, struct stat *st) {
+    // Return 0 to indicate that the file status is always successful
+    return 0;
+}
+
+int _isatty(int fd) {
+    // Always return true (1), assuming no file descriptor handling
+    return 1;
+}
+void _exit(int status) {
+    while (1);  // Do nothing, hang the system
+}
+
+int _read(int fd, char *buf, size_t count) {
+    return 0; // Simulate a no-op read
+}
+
+int _write(int fd, const char *buf, size_t count) {
+    // Simulate writing to the console or terminal
+    return count;
+}
+
+int _close(int fd) {
+    return -1; // Simulate closing a file descriptor
+}
+
+int _lseek(int fd, int offset, int whence) {
+    return 0; // Simulate seeking in a file
+}
+
 
 
 /***********************************************************************************************************************
@@ -30,6 +70,7 @@ static u8 Binarycount[3];
 static u8 Binarycountcheck[3];
 static level2clk ;                     // Track level 2 clock count
 static Endgameclk ;                     // Track endgame clock count
+static winclk ;
 
 /***********************************************************************************************************************
 LED Control Functions
@@ -442,8 +483,9 @@ static void UserAppGamelevel1(void) {
 
         // Print decimal value on LCD
         // Example action: Clear screen if user inputs "000" (0 in decimal)
-        static int i;
-        if (decimalValue == 0 &&  i == 0) {
+        static int i = 0;  // Initialize i within this scope
+
+        if (decimalValue == 0 && i == 0) {
             PixelAddressType sbinarycountnumber0 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber0[] = {" 000 = 0... Correct."};
             LcdLoadString(au8sbinarycountnumber0, LCD_FONT_SMALL, &sbinarycountnumber0);
@@ -496,39 +538,161 @@ static void UserAppGamelevel1(void) {
             PixelAddressType sbinarycountnumber7 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber7[] = {" 111 = 7... Correct."};
             LcdLoadString(au8sbinarycountnumber7, LCD_FONT_SMALL, &sbinarycountnumber7);
+            i = 0;
+            Level1clk = 0;
+            clear = 0;
+            InputIndex = 0;
             UserApp1_pfStateMachine = UserAppGamelevel2;
         }
         else {
             PixelAddressType sbinarycountfail = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountfail[] = {" Incorrect!!!."};
             LcdLoadString(au8sbinarycountfail, LCD_FONT_SMALL, &sbinarycountfail);
+            i = 0;
+            Level1clk = 0;
+            clear = 0;
+            InputIndex = 0;
             UserApp1_pfStateMachine = UserAppEndGame;
         }
+
         // Reset input index for the next number
         InputIndex = 0;
     }
 }
 
 
-static void UserAppGamelevel2(void) {
-    level2clk++;
-    if(level2clk ==500  && clear == 1){
-        LcdClearScreen();
-        PixelAddressType sLevel2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
-        u8 au8Level2[] = {"Congrats lone warrior!"};
-        LcdLoadString(au8Level2, LCD_FONT_SMALL, &sLevel2);
-        clear = 0;
-        level2clk = 0;
-    }
+#define RandomNumber() (rand() % 2) // Generates 0 or 1
 
-    if(level2clk == 2000 && clear == 0){
-        LcdClearScreen();
-        PixelAddressType sLevel_2 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-        u8 au8Level_2[] = {"     ---Level 2---"};
-        LcdLoadString(au8Level_2, LCD_FONT_SMALL, &sLevel_2);
+static void UserAppGamelevel2(void) {
+    static u8 GeneratedNumbers[7];  // Stores the random sequence (max 6 digits + null terminator)
+    static u8 UserInput[7];         // Stores user input
+    static u8 InputIndex = 0;       // Tracks user input index
+    static u8 GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
+    static u16 Level2Timer = 0;     // Timer for transitions
+    static u8 DisplayIndex = 0;     // Tracks which number is being displayed
+    static u8 Round = 1;            // Tracks the current round (starts at 1, goes to 6)
+    static u8 DisplayBuffer[2];     // Buffer to hold a single digit for `LcdLoadString()`
+    static u8 RoundMessage[16];     // Buffer to store round messages
+
+    static const PixelAddressType Positions[6] = {
+        {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 5},    
+        {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 20},   
+        {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 35},   
+        {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 50},   
+        {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 65},   
+        {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 80}    
+    };
+
+    Level2Timer++;
+
+    switch (GamePhase) {
+        case 0:  // **Show Numbers One by One**
+            if (Level2Timer == 1) {
+                for (int i = 0; i < Round; i++) {
+                    GeneratedNumbers[i] = RandomNumber() + '0';  // Convert to char ('0' or '1')
+                }
+                GeneratedNumbers[Round] = '\0'; // Null-terminate
+                LcdClearScreen();
+                DisplayIndex = 0;
+            }
+
+            if (Level2Timer % 500 == 0 && DisplayIndex < Round) { 
+                DisplayBuffer[0] = GeneratedNumbers[DisplayIndex];
+                DisplayBuffer[1] = '\0'; // Null terminate
+                LcdLoadString(DisplayBuffer, LCD_FONT_SMALL, &Positions[DisplayIndex]);
+                DisplayIndex++;
+            }
+
+            if (DisplayIndex >= Round && Level2Timer >= 1000 + (Round * 500)) {  
+                LcdClearScreen();
+                Level2Timer = 0;
+                GamePhase = 1;
+            }
+            break;
+
+        case 1:  // **Display "READY"**
+            if (Level2Timer == 100) {
+                PixelAddressType Position = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 20};
+                u8 ReadyText[] = "READY";
+                LcdLoadString(ReadyText, LCD_FONT_SMALL, &Position);
+            }
+            if (Level2Timer == 600) {  
+                LcdClearScreen();
+                GamePhase = 2;
+                Level2Timer = 0;
+                InputIndex = 0;
+            }
+            break;
+
+        case 2:  // **User Input Phase**
+            if (WasButtonPressed(BUTTON0) && InputIndex < Round) {
+                UserInput[InputIndex++] = '0';
+                LedFlashBlue(BLUE0);
+                ButtonAcknowledge(BUTTON0);
+            }
+
+            if (WasButtonPressed(BUTTON1) && InputIndex < Round) {
+                UserInput[InputIndex++] = '1';
+                LedFlashBlue(BLUE1);
+                ButtonAcknowledge(BUTTON1);
+            }
+
+            if (InputIndex >= Round) {  
+                UserInput[Round] = '\0'; // Null terminate
+                GamePhase = 3;
+                Level2Timer = 0;
+            }
+            break;
+
+        case 3:  // **Validate Input**
+            if (Level2Timer == 100) {
+                LcdClearScreen();
+                PixelAddressType Position = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 10};
+
+                if (strcmp((char*)UserInput, (char*)GeneratedNumbers) == 0) {
+                    if (Round < 6) {
+                        sprintf((char*)RoundMessage, "Round %d Cleared!", Round);
+                    } else {
+                        sprintf((char*)RoundMessage, "Final Round Cleared!");
+                    }
+                    LcdLoadString(RoundMessage, LCD_FONT_SMALL, &Position);
+                    GamePhase = 4; // Move to success confirmation
+                } else {
+                    u8 IncorrectText[] = "Game Over!";
+                    LcdLoadString(IncorrectText, LCD_FONT_SMALL, &Position);
+                    GamePhase = 5; // Move to end state
+                }
+                Level2Timer = 0;
+            }
+            break;
+
+        case 4:  // **Round Success Confirmation**
+            if (Level2Timer == 600) {
+                LcdClearScreen();
+                if (Round < 6) {  // If not the final round, move to next round
+                    Round++;
+                    GamePhase = 0;
+                } else {
+                    GamePhase = 6;  // Move to success state
+                }
+                Level2Timer = 0;
+            }
+            break;
+
+        case 5:  // **Game Over - Move to End Game**
+            if (Level2Timer == 800) {
+                UserApp1_pfStateMachine = UserAppEndGame;
+            }
+            break;
+
+        case 6:  // **Victory - Move to Success State**
+            if (Level2Timer == 800) {
+                UserApp1_pfStateMachine = userAppWinner;
+            }
+            break;
     }
-    
 }
+
 
 static void UserAppEndGame(void) {
     Endgameclk++;
@@ -654,6 +818,135 @@ static void UserAppEndGame(void) {
     LcdLoadBitmap(&aau8chopper[0][0], &chopper);
     }
     if (Endgameclk == 3000){
+        UserApp1_pfStateMachine = UserApp1Initialize;
+    }
+}
+
+static void userAppWinner(void) {
+    winclk++;
+    PixelAddressType sWinner = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8Winner[] = {"   WINNER!!!"};
+    LcdLoadString(au8Winner, LCD_FONT_SMALL , &sWinner);
+
+
+    const u8 aau8victoryroyale[U8_LCD_IMAGE_ROW_SIZE_50PX][U8_LCD_IMAGE_COL_BYTES_50PX] = {						
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0xB8, 0x07, 0x00, 0x00},
+    {0x00, 0x00, 0xFE, 0xBF, 0xFF, 0x01, 0x00},
+    {0x00, 0x80, 0xE3, 0xB8, 0x03, 0x00, 0x00},
+    {0x00, 0x80, 0xF1, 0xB0, 0xCB, 0x01, 0x00},
+    {0x00, 0xC0, 0xF0, 0xB0, 0x29, 0x01, 0x00},
+    {0x00, 0xE0, 0xCA, 0xE0, 0x29, 0x00, 0x00},
+    {0x00, 0x30, 0xCA, 0xE0, 0xE8, 0x01, 0x00},
+    {0x00, 0x38, 0xDF, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x1C, 0xCA, 0x00, 0xC0, 0x01, 0x00},
+    {0x00, 0x1E, 0xDF, 0x00, 0xC0, 0x01, 0x00},
+    {0x00, 0x0F, 0xCA, 0x00, 0x40, 0x00, 0x00},
+    {0x80, 0x07, 0xCA, 0x00, 0xC0, 0x01, 0x00},
+    {0xC0, 0x01, 0xC0, 0x00, 0xC0, 0x00, 0x00},
+    {0x60, 0x0C, 0x00, 0x00, 0xC0, 0x00, 0x00},
+    {0x70, 0x07, 0x00, 0x00, 0xC0, 0x00, 0x00},
+    {0xF8, 0x03, 0x80, 0x01, 0x00, 0x00, 0x00},
+    {0xCC, 0x01, 0xC0, 0x01, 0x00, 0x00, 0x00},
+    {0xEE, 0xFF, 0x7F, 0xFF, 0xFF, 0x01, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x4C, 0xC1, 0x01, 0x00, 0x60, 0x00, 0x00},
+    {0x54, 0x49, 0x00, 0x00, 0x14, 0x00, 0x00},
+    {0x8C, 0xC1, 0x4E, 0x8C, 0x21, 0x00, 0x00},
+    {0x14, 0x49, 0xA2, 0x54, 0x44, 0x00, 0x00},
+    {0x8C, 0x41, 0x62, 0xD5, 0x35, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x00},
+    {0x00, 0x86, 0x7F, 0x0E, 0x1E, 0xA4, 0x00},
+    {0x00, 0xC9, 0x3F, 0x3F, 0x33, 0x54, 0x01},
+    {0x80, 0x19, 0x8E, 0xB1, 0x61, 0x00, 0x00},
+    {0xC0, 0x10, 0x8E, 0x81, 0x40, 0x00, 0x00},
+    {0xC0, 0x3F, 0x8E, 0xA1, 0x61, 0x00, 0x00},
+    {0xE0, 0x70, 0x8E, 0x31, 0x33, 0x00, 0x00},
+    {0x70, 0xF0, 0x0E, 0x1F, 0x1E, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0xF0, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F, 0x00},
+    {0xF8, 0xFF, 0xFF, 0xFF, 0xFF, 0x07, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+    };
+
+    // Now display it on the LCD
+    PixelBlockType victoryRoyale = {14, 0, 50, 50};  // Define position and size
+    LcdLoadBitmap(&aau8victoryroyale[0][0], &victoryRoyale);
+
+    const u8 aau8victoryroyale1[U8_LCD_IMAGE_ROW_SIZE_50PX][U8_LCD_IMAGE_COL_BYTES_50PX] = {						
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0xFF, 0xFF, 0x9F, 0xFF, 0xFF, 0x07, 0x00},
+        {0x00, 0x00, 0x60, 0x00, 0x00, 0x06, 0x00},
+        {0x6E, 0x4E, 0x13, 0x00, 0x80, 0x03, 0x00},
+        {0x94, 0x52, 0x01, 0x00, 0x80, 0x01, 0x00},
+        {0x94, 0x8E, 0x00, 0x00, 0xC0, 0x00, 0x00},
+        {0x64, 0x9A, 0x00, 0x00, 0x60, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00},
+        {0x01, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00},
+        {0x03, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00},
+        {0x33, 0xD1, 0x89, 0x03, 0x06, 0x00, 0x00},
+        {0x4B, 0x5B, 0x89, 0x00, 0x03, 0x00, 0x00},
+        {0x49, 0x4E, 0x89, 0x81, 0x01, 0x00, 0x00},
+        {0x4B, 0xC4, 0x89, 0xC0, 0x00, 0x00, 0x00},
+        {0x33, 0x64, 0xBB, 0x63, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00},
+        {0xFF, 0xFF, 0xFF, 0x0F, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+        };
+
+    
+        // Now display it on the LCD
+        PixelBlockType victoryRoyale1 = {14, 41, 50, 50};  // Define position and size
+        LcdLoadBitmap(&aau8victoryroyale1[0][0], &victoryRoyale1);
+    
+
+
+    if(winclk == 300){
         UserApp1_pfStateMachine = UserApp1Initialize;
     }
 }

@@ -53,6 +53,7 @@ static void userApppasswordset(void);
 static void UserAppGamelevel1(void);
 static void UserAppGamelevel2(void);
 static void UserAppEndGame(void);
+static void userAppWinner(void);
 
 
 
