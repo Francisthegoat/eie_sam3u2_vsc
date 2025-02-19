@@ -442,17 +442,67 @@ static void UserAppGamelevel1(void) {
 
         // Print decimal value on LCD
         // Example action: Clear screen if user inputs "000" (0 in decimal)
-        int i = 0;
-        if (decimalValue == 0 && i == 0) {
+        static i;
+        if (decimalValue == 0 &&  i == 0) {
             PixelAddressType sbinarycountnumber0 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber0[] = {" 000 = 0... Correct."};
             LcdLoadString(au8sbinarycountnumber0, LCD_FONT_SMALL, &sbinarycountnumber0);
+            i++;
         }
 
+        if (decimalValue == 1 && i == 1) {
+            PixelAddressType sbinarycountnumber1 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber1[] = {" 001 = 1... Correct."};
+            LcdLoadString(au8sbinarycountnumber1, LCD_FONT_SMALL, &sbinarycountnumber1);
+            i++;
+        }
+
+        if (decimalValue == 2 && i == 2) {
+            PixelAddressType sbinarycountnumber2 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber2[] = {" 010 = 2... Correct."};
+            LcdLoadString(au8sbinarycountnumber2, LCD_FONT_SMALL, &sbinarycountnumber2);
+            i++;
+        }
+
+        if (decimalValue == 3 && i == 3) {
+            PixelAddressType sbinarycountnumber3 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber3[] = {" 011 = 3... Correct."};
+            LcdLoadString(au8sbinarycountnumber3, LCD_FONT_SMALL, &sbinarycountnumber3);
+            i++;
+        }
+
+        if (decimalValue == 4 && i == 4) {
+            PixelAddressType sbinarycountnumber4 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber4[] = {" 100 = 4... Correct."};
+            LcdLoadString(au8sbinarycountnumber4, LCD_FONT_SMALL, &sbinarycountnumber4);
+            i++;
+        }
+
+        if (decimalValue == 5 && i == 5) {
+            PixelAddressType sbinarycountnumber5 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber5[] = {" 101 = 5... Correct."};
+            LcdLoadString(au8sbinarycountnumber5, LCD_FONT_SMALL, &sbinarycountnumber5);
+            i++;
+        }
+
+        if (decimalValue == 6 && i == 6) {
+            PixelAddressType sbinarycountnumber6 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber6[] = {" 110 = 6... Correct."};
+            LcdLoadString(au8sbinarycountnumber6, LCD_FONT_SMALL, &sbinarycountnumber6);
+            i++;
+        }
+
+        if (decimalValue == 7 && i == 7) {
+            PixelAddressType sbinarycountnumber7 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+            u8 au8sbinarycountnumber7[] = {" 111 = 7... Correct."};
+            LcdLoadString(au8sbinarycountnumber7, LCD_FONT_SMALL, &sbinarycountnumber7);
+            i++;
+        }
         // Reset input index for the next number
         InputIndex = 0;
     }
 }
+
 
 // static void UserAppGamelevel2(void) {
 
