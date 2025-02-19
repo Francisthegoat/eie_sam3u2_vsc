@@ -28,8 +28,8 @@ static Level1clk ;
 static clear;                     // Track level 1 clock count
 static u8 Binarycount[3];
 static u8 Binarycountcheck[3];
-//static level2clk ;                     // Track level 2 clock count
-//static Endgameclk ;                     // Track endgame clock count
+static level2clk ;                     // Track level 2 clock count
+static Endgameclk ;                     // Track endgame clock count
 
 /***********************************************************************************************************************
 LED Control Functions
@@ -383,7 +383,7 @@ static void UserAppGamelevel1(void) {
     Level1clk++;
 
     // Display messages based on timing
-    if (Level1clk == 3000 && clear == 0) {
+    if (Level1clk == 1500 && clear == 0) {
         LcdClearScreen();
         PixelAddressType sWelcometothegame = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Welcometothegame[] = {"Welcome to the game!!"};
@@ -391,7 +391,7 @@ static void UserAppGamelevel1(void) {
         clear = 1;
     }
 
-    if (Level1clk == 6000 && clear == 1) {
+    if (Level1clk == 4000 && clear == 1) {
         LcdClearScreen();
         PixelAddressType sLevel1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Level1[] = {"     ---Level 1---"};
@@ -407,7 +407,7 @@ static void UserAppGamelevel1(void) {
     }
 
     // Reset clock after displaying messages
-    if (Level1clk >= 6000) {
+    if (Level1clk >= 4000) {
         Level1clk = 0;
     }
 
@@ -496,12 +496,13 @@ static void UserAppGamelevel1(void) {
             PixelAddressType sbinarycountnumber7 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber7[] = {" 111 = 7... Correct."};
             LcdLoadString(au8sbinarycountnumber7, LCD_FONT_SMALL, &sbinarycountnumber7);
-            i++;
+            UserApp1_pfStateMachine = UserAppGamelevel2;
         }
         else {
             PixelAddressType sbinarycountfail = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountfail[] = {" Incorrect!!!."};
             LcdLoadString(au8sbinarycountfail, LCD_FONT_SMALL, &sbinarycountfail);
+            UserApp1_pfStateMachine = UserAppEndGame;
         }
         // Reset input index for the next number
         InputIndex = 0;
@@ -509,14 +510,53 @@ static void UserAppGamelevel1(void) {
 }
 
 
-// static void UserAppGamelevel2(void) {
+static void UserAppGamelevel2(void) {
+    level2clk++;
+    if(level2clk ==100  && clear == 1){
+        LcdClearScreen();
+        PixelAddressType sLevel2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Level2[] = {"Congrats lone warrior!"};
+        LcdLoadString(au8Level2, LCD_FONT_SMALL, &sLevel2);
+        clear = 0;
+        level2clk = 0;
+    }
 
-// }
+    if(level2clk == 2000 && clear == 0){
+        LcdClearScreen();
+        PixelAddressType sLevel_2 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+        u8 au8Level_2[] = {"     ---Level 2---"};
+        LcdLoadString(au8Level_2, LCD_FONT_SMALL, &sLevel_2);
+    }
+    
+}
 
-// static void UserAppEndGame(void) {
+static void UserAppEndGame(void) {
+    Endgameclk++;
+    if(Endgameclk == 1000){
+    LcdClearScreen();
+    PixelAddressType sEndgame = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8Endgame[] = {"     ---End Game---"};
+    LcdLoadString(au8Endgame, LCD_FONT_SMALL, &sEndgame);
+    }
+}
 
-// }
+/*************  ✨ Codeium Command ⭐  *************/
+/**
+@fn void UserApp1RunActiveState(void)
 
+@brief Selects and runs one iteration of the current state in the state machine.
+
+All state machines have a TOTAL of 1ms to execute, so on average n state machines
+may take 1ms / n to execute.
+
+Requires:
+- State machine function pointer points at current state
+
+Promises:
+- Calls the function to pointed by the state machine function pointer
+
+*/
+/******  badd3ba2-4442-4d67-80f3-0786ce5e2db3  *******/
 void UserApp1RunActiveState(void) {
     UserApp1_pfStateMachine();
 }
