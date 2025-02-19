@@ -653,6 +653,9 @@ static void UserAppEndGame(void) {
     PixelBlockType chopper = {14, 60, 50, 50};
     LcdLoadBitmap(&aau8chopper[0][0], &chopper);
     }
+    if (Endgameclk == 3000){
+        UserApp1_pfStateMachine = UserApp1Initialize;
+    }
 }
 
 void UserApp1RunActiveState(void) {
