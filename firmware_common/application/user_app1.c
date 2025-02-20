@@ -239,15 +239,15 @@ void UserApp1Initialize(void) {
 
     // Display welcome messages on the LCD
     PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString[] = {"Hello, ATCO Talent"};
+    u8 au8TestString[] = {"------Greetings------"};
     LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
 
-    PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString1[] = {"Acquisition Team,"};
+    PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8TestString1[] = {"    Featuring ANT."};
     LcdLoadString(au8TestString1, LCD_FONT_SMALL, &sTestStringLocation1);
 
     PixelAddressType sTestStringLocation2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString2[] = {"Please enjoy! FT ANT."};
+    u8 au8TestString2[] = {"Please Enter Password"};
     LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
 
     /* Initialize state machine */
