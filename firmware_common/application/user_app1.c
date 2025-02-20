@@ -613,7 +613,7 @@ static void UserAppGamelevel2(void) {
         case 1:  // **Display "READY"**
             if (Level2Timer == 100) {
                 PixelAddressType Position = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN + 20};
-                u8 ReadyText[] = "READY";
+                u8 ReadyText[] = "READY, Go!";
                 LcdLoadString(ReadyText, LCD_FONT_SMALL, &Position);
             }
             if (Level2Timer == 600) {  
@@ -817,9 +817,9 @@ static void UserAppEndGame(void) {
     PixelBlockType chopper = {14, 60, 50, 50};
     LcdLoadBitmap(&aau8chopper[0][0], &chopper);
     }
-    if (Endgameclk == 3000){
-        UserApp1_pfStateMachine = UserApp1Initialize;
-    }
+    // if (Endgameclk == 3000){
+    //     UserApp1_pfStateMachine = UserApp1Initialize;
+    // }
 }
 
 static void userAppWinner(void) {
@@ -946,9 +946,9 @@ static void userAppWinner(void) {
     
 
 
-    if(winclk == 300){
-        UserApp1_pfStateMachine = UserApp1Initialize;
-    }
+    // if(winclk == 300){
+    //     UserApp1_pfStateMachine = UserApp1Initialize;
+    // }
 }
 
 void UserApp1RunActiveState(void) {
