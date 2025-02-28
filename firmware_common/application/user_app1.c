@@ -69,10 +69,31 @@ static u8 Binarycountcheck[3];
 static level2clk ;                     // Track level 2 clock count
 static Endgameclk ;                     // Track endgame clock count
 static winclk ;
+static u8 InputIndex1 = 0;       // Tracks user input index
+static u8 GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
+static u16 Level2Timer = 0;     // Timer for transitions
+static u8 DisplayIndex = 0;     // Tracks which number is being displayed
+static u8 Round = 1;
 
 /***********************************************************************************************************************
 LED Control Functions
 ***********************************************************************************************************************/
+static void ResetGameVariables(void) {
+    memset(Binarycount, 0, sizeof(Binarycount));
+    memset(Binarycountcheck, 0, sizeof(Binarycountcheck));
+    Level1clk = 0;
+    level2clk = 0;
+    Endgameclk = 0;
+    winclk = 0;
+    clear = 0;
+    InputIndex = 0;       // Tracks user input index
+    InputIndex1 = 0;       // Tracks user input index
+    GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
+    Level2Timer = 0;     // Timer for transitions
+    DisplayIndex = 0;     // Tracks which number is being displayed
+    Round = 1;
+}
+
 void LedSetColorWhite(void) {
     LedOn(RED3);
     LedOn(GREEN3);
@@ -151,7 +172,7 @@ static void ResetNewPassword(void) {
 }
 
 /***********************************************************************************************************************
-Delay Function
+Terible delay made by chat gpt in too deep to fix.
 ***********************************************************************************************************************/
 void DelayMs(u32 timems) {
     volatile u32 count;
@@ -294,6 +315,7 @@ void userApppasswordcorrect(void) {
     DelayMs(100);  // Visual feedback delay
     LedSetColorYellow(); // Return to locked state
 
+    ResetGameVariables();
     UserApp1_pfStateMachine = UserAppGamelevel1; // enter level 1.
 }
 
@@ -313,6 +335,9 @@ void userApppasswordincorrect(void) {
     LedSetColorRed(); // Flash red on LED3 to indicate password is incorrect
     DelayMs(100);  // Visual feedback delay
     LedSetColorYellow(); // Return to locked state
+
+    ResetGameVariables();
+    UserApp1_pfStateMachine = UserApp1SM_Idle;
 }
 
 static void UserAppGamelevel1(void) {
@@ -434,9 +459,7 @@ static void UserAppGamelevel1(void) {
             u8 au8sbinarycountnumber7[] = {" 111 = 7... Correct."};
             LcdLoadString(au8sbinarycountnumber7, LCD_FONT_SMALL, &sbinarycountnumber7);
             i = 0;
-            Level1clk = 0;
-            clear = 0;
-            InputIndex = 0;
+            ResetGameVariables();
             UserApp1_pfStateMachine = UserAppGamelevel2;
         }
         else {
@@ -444,9 +467,7 @@ static void UserAppGamelevel1(void) {
             u8 au8sbinarycountfail[] = {" Incorrect!!!."};
             LcdLoadString(au8sbinarycountfail, LCD_FONT_SMALL, &sbinarycountfail);
             i = 0;
-            Level1clk = 0;
-            clear = 0;
-            InputIndex = 0;
+            ResetGameVariables();
             UserApp1_pfStateMachine = UserAppEndGame;
         }
 
@@ -461,11 +482,11 @@ static void UserAppGamelevel1(void) {
 static void UserAppGamelevel2(void) {
     static u8 GeneratedNumbers[7];  // Stores the random sequence (max 6 digits + null terminator)
     static u8 UserInput[7];         // Stores user input
-    static u8 InputIndex = 0;       // Tracks user input index
-    static u8 GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
-    static u16 Level2Timer = 0;     // Timer for transitions
-    static u8 DisplayIndex = 0;     // Tracks which number is being displayed
-    static u8 Round = 1;            // Tracks the current round (starts at 1, goes to 6)
+    // static u8 InputIndex = 0;       // Tracks user input index
+    // static u8 GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
+    // static u16 Level2Timer = 0;     // Timer for transitions
+    // static u8 DisplayIndex = 0;     // Tracks which number is being displayed
+    // static u8 Round = 1;            // Tracks the current round (starts at 1, goes to 6)
     static u8 DisplayBuffer[2];     // Buffer to hold a single digit for `LcdLoadString()`
     static u8 RoundMessage[16];     // Buffer to store round messages
 
@@ -515,24 +536,24 @@ static void UserAppGamelevel2(void) {
                 LcdClearScreen();
                 GamePhase = 2;
                 Level2Timer = 0;
-                InputIndex = 0;
+                InputIndex1 = 0;
             }
             break;
 
         case 2:  // **User Input Phase**
-            if (WasButtonPressed(BUTTON0) && InputIndex < Round) {
-                UserInput[InputIndex++] = '0';
+            if (WasButtonPressed(BUTTON0) && InputIndex1 < Round) {
+                UserInput[InputIndex1++] = '0';
                 LedFlashBlue(BLUE0);
                 ButtonAcknowledge(BUTTON0);
             }
 
-            if (WasButtonPressed(BUTTON1) && InputIndex < Round) {
-                UserInput[InputIndex++] = '1';
+            if (WasButtonPressed(BUTTON1) && InputIndex1 < Round) {
+                UserInput[InputIndex1++] = '1';
                 LedFlashBlue(BLUE1);
                 ButtonAcknowledge(BUTTON1);
             }
 
-            if (InputIndex >= Round) {  
+            if (InputIndex1 >= Round) {  
                 UserInput[Round] = '\0'; // Null terminate
                 GamePhase = 3;
                 Level2Timer = 0;
@@ -576,12 +597,23 @@ static void UserAppGamelevel2(void) {
 
         case 5:  // **Game Over - Move to End Game**
             if (Level2Timer == 800) {
+            InputIndex1 = 0;       // Tracks user input index
+            GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
+            Level2Timer = 0;     // Timer for transitions
+            DisplayIndex = 0;     // Tracks which number is being displayed
+            Round = 1;
+
                 UserApp1_pfStateMachine = UserAppEndGame;
             }
             break;
 
         case 6:  // **Victory - Move to Success State**
             if (Level2Timer == 800) {
+            InputIndex1 = 0;       // Tracks user input index
+            GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = Validate, 4 = Success Confirm
+            Level2Timer = 0;     // Timer for transitions
+            DisplayIndex = 0;     // Tracks which number is being displayed
+            Round = 1;
                 UserApp1_pfStateMachine = userAppWinner;
             }
             break;
@@ -877,8 +909,10 @@ static void UserApp1SM_Idle(void) {
 
         /* Feedback for match or mismatch */
         if (Match) {
+            ResetGameVariables();
             UserApp1_pfStateMachine =  userApppasswordcorrect;
         } else {
+            ResetGameVariables();
             userApppasswordincorrect();
         }
     }
