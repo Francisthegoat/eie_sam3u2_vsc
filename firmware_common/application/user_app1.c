@@ -74,6 +74,9 @@ static u8 GamePhase = 0;        // 0 = Show numbers, 1 = Ready, 2 = Input, 3 = V
 static u16 Level2Timer = 0;     // Timer for transitions
 static u8 DisplayIndex = 0;     // Tracks which number is being displayed
 static u8 Round = 1;
+static u8 step = 0;
+static u8 startTime = 0;
+static Buzz = 0;
 
 /***********************************************************************************************************************
 LED Control Functions
@@ -92,6 +95,7 @@ static void ResetGameVariables(void) {
     Level2Timer = 0;     // Timer for transitions
     DisplayIndex = 0;     // Tracks which number is being displayed
     Round = 1;
+    Buzz = 0;
 }
 
 void LedSetColorWhite(void) {
@@ -190,6 +194,7 @@ void UserApp1Initialize(void) {
     for (u8 i = 0; i < U8_TOTAL_LEDS; i++) {
         LedOff((LedNameType)i); // Turn off all LEDs
     }
+    PWMAudioSetFrequency(BUZZER1, 500);
 
     /* Indicate locked state */
     LedSetColorYellow(); // LED3 yellow during locked state
@@ -202,10 +207,6 @@ void UserApp1Initialize(void) {
     PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
     u8 au8TestString[] = {"------Greetings------"};
     LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
-
-    PixelAddressType sTestStringLocation1 = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString1[] = {"    Featuring ANT."};
-    LcdLoadString(au8TestString1, LCD_FONT_SMALL, &sTestStringLocation1);
 
     PixelAddressType sTestStringLocation2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
     u8 au8TestString2[] = {"Please Enter Password"};
@@ -225,14 +226,18 @@ void userApppasswordset(void) {
     if(InputIndex < 4){
         if (WasButtonPressed(BUTTON0)) {
             CandidatePassword[InputIndex++] = 0;
+            PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE0); // Feedback for Button0 press (blue on LED0)
             ButtonAcknowledge(BUTTON0);
+            PWMAudioOff(BUZZER1);
         }
 
         if (WasButtonPressed(BUTTON1)) {
             CandidatePassword[InputIndex++] = 1;
+            PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE1); // Feedback for Button1 press (blue on LED1)
             ButtonAcknowledge(BUTTON1);
+            PWMAudioOff(BUZZER1);
         }
     }
     /* Prevent overflow */
@@ -328,10 +333,6 @@ void userApppasswordincorrect(void) {
     u8 au8DeniedMessage[] = {"    Ascess denied, "};
     LcdLoadString(au8DeniedMessage, LCD_FONT_SMALL, &sDeniedLocation);
 
-    PixelAddressType sDeniedLocation1 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8DeniedMessage1[] = {"    Ip Flagged !!!"};
-    LcdLoadString(au8DeniedMessage1, LCD_FONT_SMALL, &sDeniedLocation1);
-
     LedSetColorRed(); // Flash red on LED3 to indicate password is incorrect
     DelayMs(100);  // Visual feedback delay
     LedSetColorYellow(); // Return to locked state
@@ -344,7 +345,7 @@ static void UserAppGamelevel1(void) {
     Level1clk++;
 
     // Display messages based on timing
-    if (Level1clk == 1500 && clear == 0) {
+    if (Level1clk == 1000 && clear == 0) {
         LcdClearScreen();
         PixelAddressType sWelcometothegame = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Welcometothegame[] = {"Welcome to the game!!"};
@@ -352,7 +353,7 @@ static void UserAppGamelevel1(void) {
         clear = 1;
     }
 
-    if (Level1clk == 4000 && clear == 1) {
+    if (Level1clk == 2000 && clear == 1) {
         LcdClearScreen();
         PixelAddressType sLevel1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Level1[] = {"     ---Level 1---"};
@@ -368,7 +369,7 @@ static void UserAppGamelevel1(void) {
     }
 
     // Reset clock after displaying messages
-    if (Level1clk >= 4000) {
+    if (Level1clk >= 2000) {
         Level1clk = 0;
     }
 
@@ -376,16 +377,20 @@ static void UserAppGamelevel1(void) {
     if (WasButtonPressed(BUTTON0)) {
         if (InputIndex < 3) {  // Ensure we don't go out of bounds
             Binarycount[InputIndex++] = 0;
+            PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE0); // Feedback for Button0 press
             ButtonAcknowledge(BUTTON0);
+            PWMAudioOff(BUZZER1);
         }
     }
 
     if (WasButtonPressed(BUTTON1)) {
         if (InputIndex < 3) {  // Ensure we don't go out of bounds
             Binarycount[InputIndex++] = 1;
+            PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE1); // Feedback for Button1 press
             ButtonAcknowledge(BUTTON1);
+            PWMAudioOff(BUZZER1);
         }
     }
 
@@ -543,14 +548,18 @@ static void UserAppGamelevel2(void) {
         case 2:  // **User Input Phase**
             if (WasButtonPressed(BUTTON0) && InputIndex1 < Round) {
                 UserInput[InputIndex1++] = '0';
+                PWMAudioOn(BUZZER1);
                 LedFlashBlue(BLUE0);
                 ButtonAcknowledge(BUTTON0);
+                PWMAudioOff(BUZZER1);
             }
 
             if (WasButtonPressed(BUTTON1) && InputIndex1 < Round) {
                 UserInput[InputIndex1++] = '1';
+                PWMAudioOn(BUZZER1);
                 LedFlashBlue(BLUE1);
                 ButtonAcknowledge(BUTTON1);
+                PWMAudioOff(BUZZER1);
             }
 
             if (InputIndex1 >= Round) {  
@@ -623,10 +632,12 @@ static void UserAppGamelevel2(void) {
 
 static void UserAppEndGame(void) {
     Endgameclk++;
+    
     if(Endgameclk == 1000){
     LcdClearScreen();
     PixelAddressType sEndgame = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
     u8 au8Endgame[] = {"  ---GAME OVER---"};
+
     LcdLoadString(au8Endgame, LCD_FONT_SMALL, &sEndgame);
 
     const u8 aau8car[U8_LCD_IMAGE_ROW_SIZE_50PX][U8_LCD_IMAGE_COL_BYTES_50PX] = {					
@@ -741,8 +752,33 @@ static void UserAppEndGame(void) {
 
     PixelBlockType chopper = {14, 60, 50, 50};
     LcdLoadBitmap(&aau8chopper[0][0], &chopper);
+
+    Buzz = 0;
     }
-    if (Endgameclk == 3000){
+
+    // Play defeat sound sequence
+    if (Endgameclk == 1100) {  
+        PWMAudioSetFrequency(BUZZER1, D4S);
+        PWMAudioOn(BUZZER1);
+        Buzz = 1;
+    } 
+    else if (Endgameclk == 1600 && Buzz == 1) {  
+        PWMAudioOff(BUZZER1); // Stop previous note
+        PWMAudioSetFrequency(BUZZER1, C4);
+        PWMAudioOn(BUZZER1);
+        Buzz = 2;
+    } 
+    else if (Endgameclk == 2100 && Buzz == 2) {  
+        PWMAudioOff(BUZZER1);
+        PWMAudioSetFrequency(BUZZER1, F3S);
+        PWMAudioOn(BUZZER1);
+        Buzz = 3;
+    }
+    else if (Endgameclk == 4400 && Buzz == 3) {  
+        PWMAudioOff(BUZZER1); // Stop final sound
+    }
+
+    if(Endgameclk == 4600){
         UserApp1_pfStateMachine = UserApp1Initialize;
     }
 }
@@ -863,7 +899,7 @@ static void userAppWinner(void) {
         PixelBlockType victoryRoyale1 = {14, 41, 50, 50};  // Define position and size
         LcdLoadBitmap(&aau8victoryroyale1[0][0], &victoryRoyale1);
     
-    if(winclk == 300){
+    if(winclk == 2000){
         UserApp1_pfStateMachine = UserApp1Initialize;
     }
 }
@@ -884,14 +920,18 @@ static void UserApp1SM_Idle(void) {
     if (InputIndex < 4) {
         if (WasButtonPressed(BUTTON0)) {
             CandidatePassword[InputIndex++] = 0;
+            PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE0); // Feedback for Button0 press (blue on LED0)
             ButtonAcknowledge(BUTTON0);
+            PWMAudioOff(BUZZER1);
         }
 
         if (WasButtonPressed(BUTTON1)) {
             CandidatePassword[InputIndex++] = 1;
+            PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE1); // Feedback for Button1 press (blue on LED1)
             ButtonAcknowledge(BUTTON1);
+            PWMAudioOff(BUZZER1);
         }
     }
 
@@ -914,6 +954,7 @@ static void UserApp1SM_Idle(void) {
         } else {
             ResetGameVariables();
             userApppasswordincorrect();
+            //userApppasswordincorrect;
         }
     }
 }
