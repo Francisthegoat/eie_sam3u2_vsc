@@ -83,18 +83,21 @@ static int noteIndex = 0;
 static int state = 0;
 static int timer = 0;
 static int silenceDuration = 50; // Short silence between notes
+static int ledState = 0;  // Tracks LED flashing state
 
 static Lvl2SoundClk = 0;
 static int noteIndex2 = 0;
 static int state2 = 0;
 static int timer2 = 0;
 static int silenceDuration2 = 50; // Short silence between notes
+static int ledState2 = 0;  // Tracks LED flashing state
 
 static WinSoundClk = 0;
 static int noteIndex3 = 0;
 static int state3 = 0;
 static int timer3 = 0;
 static int silenceDuration3 = 50; // Short silence between notes
+static int ledState3 = 0;  // Tracks LED flashing state
 
 /***********************************************************************************************************************
 LED Control Functions
@@ -120,18 +123,21 @@ static void ResetGameVariables(void) {
     state = 0;
     timer = 0;
     silenceDuration = 50; // Short silence between notes
+    ledState = 0;
 
     Lvl2SoundClk = 0;
     noteIndex2 = 0;
     state2 = 0;
     timer2 = 0;
     silenceDuration2 = 50; // Short silence between notes
+    ledState2 = 0;
 
     WinSoundClk = 0;
     noteIndex3 = 0;
     state3 = 0;
     timer3 = 0;
     silenceDuration3 = 50; // Short silence between notes
+    ledState3 = 0;
 
 }
 
@@ -400,12 +406,73 @@ static void UserAppLevel1sound(void) {
         PWMAudioOff(BUZZER1);  // Turn off the buzzer for silence
         state = 1;
         timer = Lvl1SoundClk;
+
+        if (ledState % 3 == 0) {
+            LedOn(RED0);
+            LedPWM(RED0, LED_PWM_30);  // soft brightness for RED
+            LedOn(RED1);
+            LedPWM(RED1, LED_PWM_30); 
+            LedOn(RED2);
+            LedPWM(RED2, LED_PWM_30);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+
+        } else if (ledState % 3 == 1) {
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOn(BLUE0);
+            LedPWM(BLUE0, LED_PWM_30);
+            LedOn(BLUE1);
+            LedPWM(BLUE1, LED_PWM_30);
+            LedOn(BLUE2);
+            LedPWM(BLUE2, LED_PWM_30);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+        } else {
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOn(GREEN0);
+            LedPWM(GREEN0, LED_PWM_30);
+            LedOn(GREEN1);
+            LedPWM(GREEN1, LED_PWM_30);
+            LedOn(GREEN2);
+            LedPWM(GREEN2, LED_PWM_30);
+        }
+        ledState++;
     } 
     else if (state == 1 && Lvl1SoundClk >= timer + silenceDuration) {
         noteIndex++;
 
         if (noteIndex >= sizeof(notes) / sizeof(notes[0])) {
             // Melody has finished
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+
             PWMAudioOff(BUZZER1);  // Ensure sound is off before transitioning
             ResetGameVariables();  
             UserApp1_pfStateMachine = UserAppGamelevel1;  // Move to level 1
@@ -441,12 +508,73 @@ static void UserAppLevel2sound(void){
         PWMAudioOff(BUZZER1);  // Turn off the buzzer for silence
         state2 = 1;
         timer2 = Lvl2SoundClk;
+
+        if (ledState2 % 3 == 0) {
+            LedOn(RED0);
+            LedPWM(RED0, LED_PWM_30);  // soft brightness for RED
+            LedOn(RED1);
+            LedPWM(RED1, LED_PWM_30); 
+            LedOn(RED2);
+            LedPWM(RED2, LED_PWM_30);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+
+        } else if (ledState2 % 3 == 1) {
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOn(BLUE0);
+            LedPWM(BLUE0, LED_PWM_30);
+            LedOn(BLUE1);
+            LedPWM(BLUE1, LED_PWM_30);
+            LedOn(BLUE2);
+            LedPWM(BLUE2, LED_PWM_30);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+        } else {
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOn(GREEN0);
+            LedPWM(GREEN0, LED_PWM_30);
+            LedOn(GREEN1);
+            LedPWM(GREEN1, LED_PWM_30);
+            LedOn(GREEN2);
+            LedPWM(GREEN2, LED_PWM_30);
+        }
+        ledState2++;
     } 
     else if (state2 == 1 && Lvl2SoundClk >= timer2 + silenceDuration2) {
         noteIndex2++;
 
         if (noteIndex2 >= sizeof(notes2) / sizeof(notes2[0])) {
             // Melody has finished
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+
             PWMAudioOff(BUZZER1);  // Ensure sound is off before transitioning
             ResetGameVariables();  
             UserApp1_pfStateMachine = UserAppGamelevel2;  // Move to level 1
@@ -492,12 +620,73 @@ static void UserAppWinnerSound(void){
         PWMAudioOff(BUZZER1);  // Turn off the buzzer for silence
         state3 = 1;
         timer3 = WinSoundClk;
+
+        if (ledState3 % 3 == 0) {
+            LedOn(RED0);
+            LedPWM(RED0, LED_PWM_30);  // soft brightness for RED
+            LedOn(RED1);
+            LedPWM(RED1, LED_PWM_30); 
+            LedOn(RED2);
+            LedPWM(RED2, LED_PWM_30);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+
+        } else if (ledState3 % 3 == 1) {
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOn(BLUE0);
+            LedPWM(BLUE0, LED_PWM_30);
+            LedOn(BLUE1);
+            LedPWM(BLUE1, LED_PWM_30);
+            LedOn(BLUE2);
+            LedPWM(BLUE2, LED_PWM_30);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+        } else {
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOn(GREEN0);
+            LedPWM(GREEN0, LED_PWM_30);
+            LedOn(GREEN1);
+            LedPWM(GREEN1, LED_PWM_30);
+            LedOn(GREEN2);
+            LedPWM(GREEN2, LED_PWM_30);
+        }
+        ledState3++;
     } 
     else if (state3 == 1 && WinSoundClk >= timer3 + silenceDuration3) {
         noteIndex3++;
 
         if (noteIndex3 >= sizeof(notes3) / sizeof(notes3[0])) {
             // Melody has finished
+            LedOff(RED0);
+            LedOff(RED1);
+            LedOff(RED2);
+
+            LedOff(BLUE0);
+            LedOff(BLUE1);
+            LedOff(BLUE2);
+
+            LedOff(GREEN0);
+            LedOff(GREEN1);
+            LedOff(GREEN2);
+
             PWMAudioOff(BUZZER1);  // Ensure sound is off before transitioning
             ResetGameVariables();  
             UserApp1_pfStateMachine = UserApp1Initialize;  // Move to level 1
