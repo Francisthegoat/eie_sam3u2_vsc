@@ -304,7 +304,7 @@ void userApppasswordset(void) {
         u8 au8Setpasswordcreation1[] = {"Please proceed!"};
         LcdLoadString(au8Setpasswordcreation1, LCD_FONT_SMALL, &sSetpasswordcreated1);
 
-        DelayMs(500);  // Delay for visual effect
+        DelayMs(500);
         LedSetColorYellow(); // Return to locked state (yellow)
         ResetCandidatePassword(); // Reset for next input
         UserApp1_pfStateMachine = UserApp1SM_Idle;
