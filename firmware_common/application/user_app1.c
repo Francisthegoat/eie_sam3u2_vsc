@@ -516,7 +516,7 @@ static void UserAppGamelevel1(void) {
     Level1clk++;
 
     // Display messages based on timing
-    if (Level1clk == 1000 && clear == 0) {
+    if (Level1clk == 500 && clear == 0) {
         LcdClearScreen();
         PixelAddressType sWelcometothegame = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Welcometothegame[] = {"Welcome to the game!!"};
@@ -524,7 +524,7 @@ static void UserAppGamelevel1(void) {
         clear = 1;
     }
 
-    if (Level1clk == 2000 && clear == 1) {
+    if (Level1clk == 1000 && clear == 1) {
         LcdClearScreen();
         PixelAddressType sLevel1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Level1[] = {"     ---Level 1---"};
@@ -540,7 +540,7 @@ static void UserAppGamelevel1(void) {
     }
 
     // Reset clock after displaying messages
-    if (Level1clk >= 2000) {
+    if (Level1clk >= 1000) {
         Level1clk = 0;
     }
 
