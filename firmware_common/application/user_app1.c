@@ -78,6 +78,24 @@ static u8 step = 0;
 static u8 startTime = 0;
 static Buzz = 0;
 
+static Lvl1SoundClk = 0;
+static int noteIndex = 0;
+static int state = 0;
+static int timer = 0;
+static int silenceDuration = 50; // Short silence between notes
+
+static Lvl2SoundClk = 0;
+static int noteIndex2 = 0;
+static int state2 = 0;
+static int timer2 = 0;
+static int silenceDuration2 = 50; // Short silence between notes
+
+static WinSoundClk = 0;
+static int noteIndex3 = 0;
+static int state3 = 0;
+static int timer3 = 0;
+static int silenceDuration3 = 50; // Short silence between notes
+
 /***********************************************************************************************************************
 LED Control Functions
 ***********************************************************************************************************************/
@@ -96,6 +114,25 @@ static void ResetGameVariables(void) {
     DisplayIndex = 0;     // Tracks which number is being displayed
     Round = 1;
     Buzz = 0;
+
+    Lvl1SoundClk = 0;
+    noteIndex = 0;
+    state = 0;
+    timer = 0;
+    silenceDuration = 50; // Short silence between notes
+
+    Lvl2SoundClk = 0;
+    noteIndex2 = 0;
+    state2 = 0;
+    timer2 = 0;
+    silenceDuration2 = 50; // Short silence between notes
+
+    WinSoundClk = 0;
+    noteIndex3 = 0;
+    state3 = 0;
+    timer3 = 0;
+    silenceDuration3 = 50; // Short silence between notes
+
 }
 
 void LedSetColorWhite(void) {
@@ -320,8 +357,8 @@ void userApppasswordcorrect(void) {
     DelayMs(100);  // Visual feedback delay
     LedSetColorYellow(); // Return to locked state
 
-    ResetGameVariables();
-    UserApp1_pfStateMachine = UserAppGamelevel1; // enter level 1.
+    UserApp1_pfStateMachine = UserAppLevel1sound;
+    
 }
 
 void userApppasswordincorrect(void) {
@@ -339,6 +376,140 @@ void userApppasswordincorrect(void) {
 
     ResetGameVariables();
     UserApp1_pfStateMachine = UserApp1SM_Idle;
+}
+static void UserAppLevel1sound(void) {
+    static int noteDurations[] = {
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 200, 200, 200, 1000
+    };
+    
+    static int notes[] = {
+        E4, D4S, E4, D4S, E4, B3, D4, C4, A3, C4,
+        E4, A3, B3, E4, G4S, B3, C4
+    };
+
+    // E4, D4S, E4, D4S, E4, B3, D4, C4, A3, C4, E4, A3, B3, E4, G4S, B3, C4, E4, 
+    // E4, D4S, E4, D4S, E4, B3, D4, C4, A3, C4, E4, A3, B3, E4, C4, B3, A3, B3, C4, 
+    // D4, E4, G4, F4, E4, D4, F4, E4, D4, C4, E4, D4, C4, B3, E4, D4S, E4, D4S, E4, 
+    // B3, D4, C4, A3, C4, E4, A3, B3, E4, G4S, B3, C4, E4, E4, D4S, E4, D4S, E4, B3, 
+    // D4, C4, A3, C4, E4, A3, B3, E4, C4, B3, A3
+
+    Lvl1SoundClk++;
+
+    if (state == 0 && Lvl1SoundClk >= timer + noteDurations[noteIndex]) {
+        PWMAudioOff(BUZZER1);  // Turn off the buzzer for silence
+        state = 1;
+        timer = Lvl1SoundClk;
+    } 
+    else if (state == 1 && Lvl1SoundClk >= timer + silenceDuration) {
+        noteIndex++;
+
+        if (noteIndex >= sizeof(notes) / sizeof(notes[0])) {
+            // Melody has finished
+            PWMAudioOff(BUZZER1);  // Ensure sound is off before transitioning
+            ResetGameVariables();  
+            UserApp1_pfStateMachine = UserAppGamelevel1;  // Move to level 1
+            return;
+        }
+
+        PWMAudioSetFrequency(BUZZER1, notes[noteIndex]);
+        PWMAudioOn(BUZZER1);
+
+        state = 0;
+        timer = Lvl1SoundClk;
+    }
+}
+
+static void UserAppLevel2sound(void){
+    static int noteDurations2[] = {
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150, 
+        200, 200, 200, 200, 1000
+    };
+    
+    static int notes2[] = {
+        E4, D4S, E4, D4S, E4, B3, D4, C4, A3, C4,
+        E4, A3, B3, E4, G4S, B3, C4, E4, E4, D4S,
+        E4, D4S, E4, B3, D4, C4, A3, C4, E4, A3,
+        B3, E4, C4, B3, A3
+    };
+
+    Lvl2SoundClk++;
+
+    if (state2 == 0 && Lvl2SoundClk >= timer2 + noteDurations2[noteIndex2]) {
+        PWMAudioOff(BUZZER1);  // Turn off the buzzer for silence
+        state2 = 1;
+        timer2 = Lvl2SoundClk;
+    } 
+    else if (state2 == 1 && Lvl2SoundClk >= timer2 + silenceDuration2) {
+        noteIndex2++;
+
+        if (noteIndex2 >= sizeof(notes2) / sizeof(notes2[0])) {
+            // Melody has finished
+            PWMAudioOff(BUZZER1);  // Ensure sound is off before transitioning
+            ResetGameVariables();  
+            UserApp1_pfStateMachine = UserAppGamelevel2;  // Move to level 1
+            return;
+        }
+
+        PWMAudioSetFrequency(BUZZER1, notes2[noteIndex2]);
+        PWMAudioOn(BUZZER1);
+
+        state2 = 0;
+        timer2 = Lvl2SoundClk;
+    }
+}
+
+
+static void UserAppWinnerSound(void){
+    static int noteDurations3[] = {
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150, 150, 150, 150, 150, 150, 150, 150, 150,
+        150, 150
+    };
+    
+    static int notes3[] = {
+        E4, D4S, E4, D4S, E4, B3, D4, C4, A3, C4,
+        E4, A3, B3, E4, G4S, B3, C4, E4, E4, D4S,
+        E4, D4S, E4, B3, D4, C4, A3, C4, E4, A3,
+        B3, E4, C4, B3, A3, B3, C4, D4, E4, G4,
+        F4, E4, D4, F4, E4, D4, C4, E4, D4, C4,
+        B3, E4, D4S, E4, D4S, E4, B3, D4, C4, A3,
+        C4, E4, A3, B3, E4, G4S, B3, C4, E4, E4,
+        D4S, E4, D4S, E4, B3, D4, C4, A3, C4, E4,
+        A3, B3, E4, C4, B3, A3
+    };
+
+    WinSoundClk++;
+
+    if (state3 == 0 && WinSoundClk >= timer3 + noteDurations3[noteIndex3]) {
+        PWMAudioOff(BUZZER1);  // Turn off the buzzer for silence
+        state3 = 1;
+        timer3 = WinSoundClk;
+    } 
+    else if (state3 == 1 && WinSoundClk >= timer3 + silenceDuration3) {
+        noteIndex3++;
+
+        if (noteIndex3 >= sizeof(notes3) / sizeof(notes3[0])) {
+            // Melody has finished
+            PWMAudioOff(BUZZER1);  // Ensure sound is off before transitioning
+            ResetGameVariables();  
+            UserApp1_pfStateMachine = UserApp1Initialize;  // Move to level 1
+            return;
+        }
+
+        PWMAudioSetFrequency(BUZZER1, notes3[noteIndex3]);
+        PWMAudioOn(BUZZER1);
+
+        state3 = 0;
+        timer3 = WinSoundClk;
+    }
 }
 
 static void UserAppGamelevel1(void) {
@@ -465,7 +636,7 @@ static void UserAppGamelevel1(void) {
             LcdLoadString(au8sbinarycountnumber7, LCD_FONT_SMALL, &sbinarycountnumber7);
             i = 0;
             ResetGameVariables();
-            UserApp1_pfStateMachine = UserAppGamelevel2;
+            UserApp1_pfStateMachine = UserAppLevel2sound;
         }
         else {
             PixelAddressType sbinarycountfail = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
@@ -899,8 +1070,8 @@ static void userAppWinner(void) {
         PixelBlockType victoryRoyale1 = {14, 41, 50, 50};  // Define position and size
         LcdLoadBitmap(&aau8victoryroyale1[0][0], &victoryRoyale1);
     
-    if(winclk == 2000){
-        UserApp1_pfStateMachine = UserApp1Initialize;
+    if(winclk == 100){
+        UserApp1_pfStateMachine = UserAppWinnerSound;
     }
 }
 

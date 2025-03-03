@@ -54,6 +54,9 @@ static void UserAppGamelevel1(void);
 static void UserAppGamelevel2(void);
 static void UserAppEndGame(void);
 static void userAppWinner(void);
+static void UserAppLevel1sound(void);
+static void UserAppLevel2sound(void);
+static void UserAppWinnerSound(void);
 
 
 
