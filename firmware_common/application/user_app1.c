@@ -255,6 +255,10 @@ void UserApp1Initialize(void) {
     u8 au8TestString2[] = {"Please Enter Password"};
     LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
 
+    PixelAddressType sTestStringLocation3 = {U8_LCD_SMALL_FONT_LINE5, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8TestString3[] = {"[button0][button1]"};
+    LcdLoadString(au8TestString3, LCD_FONT_SMALL, &sTestStringLocation3);
+
     /* Initialize state machine */
     UserApp1_pfStateMachine = UserApp1SM_Idle;
 }
