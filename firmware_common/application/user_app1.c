@@ -248,12 +248,16 @@ void UserApp1Initialize(void) {
 
     // Display welcome messages on the LCD
     PixelAddressType sTestStringLocation = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString[] = {"------Greetings------"};
+    u8 au8TestString[] = {"-------AziCode-------"};
     LcdLoadString(au8TestString, LCD_FONT_SMALL, &sTestStringLocation);
 
     PixelAddressType sTestStringLocation2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
     u8 au8TestString2[] = {"Please Enter Password"};
     LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
+
+    PixelAddressType sTestStringLocation4 = {U8_LCD_SMALL_FONT_LINE4, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8TestString4[] = {"      4 Digits."};
+    LcdLoadString(au8TestString4, LCD_FONT_SMALL, &sTestStringLocation4);
 
     PixelAddressType sTestStringLocation3 = {U8_LCD_SMALL_FONT_LINE5, U16_LCD_LEFT_MOST_COLUMN};
     u8 au8TestString3[] = {"  [button0][button1]"};
@@ -376,9 +380,21 @@ void userApppasswordincorrect(void) {
     ResetCandidatePassword();
     // Display denied message on LCD
     LcdClearScreen();
-    PixelAddressType sDeniedLocation = {U8_LCD_SMALL_FONT_LINE2, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8DeniedMessage[] = {"    Ascess denied, "};
+    PixelAddressType sDeniedLocation = {U8_LCD_SMALL_FONT_LINE1, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8DeniedMessage[] = {"   Ascess denied!! "};
     LcdLoadString(au8DeniedMessage, LCD_FONT_SMALL, &sDeniedLocation);
+    
+    PixelAddressType sDeniedLocation1 = {U8_LCD_SMALL_FONT_LINE4, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8DeniedMessage1[] = {"   Hint; 4 digits,"};
+    LcdLoadString(au8DeniedMessage1, LCD_FONT_SMALL, &sDeniedLocation1);
+
+    PixelAddressType sDeniedLocation2 = {U8_LCD_SMALL_FONT_LINE5, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8DeniedMessage2[] = {"   # 6 in Binary."};
+    LcdLoadString(au8DeniedMessage2, LCD_FONT_SMALL, &sDeniedLocation2);
+
+    PixelAddressType sDeniedLocation3 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
+    u8 au8DeniedMessage3[] = {"  [button0][button1]"};
+    LcdLoadString(au8DeniedMessage3, LCD_FONT_SMALL, &sDeniedLocation3);
 
     LedSetColorRed(); // Flash red on LED3 to indicate password is incorrect
     DelayMs(100);  // Visual feedback delay
@@ -716,10 +732,11 @@ static void UserAppGamelevel1(void) {
         LcdLoadString(au8Welcometothegame, LCD_FONT_SMALL, &sWelcometothegame);
         clear = 1;
     }
-    PixelBlockType WelcomeClear = {16,0,8,128};
-    LcdClearPixels(&WelcomeClear);
 
     if (Level1clk == 1000 && clear == 1) {
+
+        PixelBlockType WelcomeClear = {16,0,8,128};
+        LcdClearPixels(&WelcomeClear);
 
         PixelAddressType sLevel1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Level1[] = {"     ---Level 1---"};
@@ -929,7 +946,7 @@ static void UserAppGamelevel2(void) {
                 u8 ReadyText[] = "READY, Go!";
                 LcdLoadString(ReadyText, LCD_FONT_SMALL, &Position);
             }
-            if (Level2Timer == 600) {  
+            if (Level2Timer == 200) {  
                 LcdClearScreen();
                 GamePhase = 2;
                 Level2Timer = 0;
@@ -940,6 +957,12 @@ static void UserAppGamelevel2(void) {
         case 2:  // **User Input Phase**
             if (WasButtonPressed(BUTTON0) && InputIndex1 < Round) {
                 UserInput[InputIndex1++] = '0';
+
+                PixelAddressType press = {U8_LCD_SMALL_FONT_LINE5,InputIndex1 * 16};
+                u8 S[16] ; 
+                sprintf(S, "%d", UserInput[InputIndex1 - 1] -48 );
+                LcdLoadString(S, LCD_FONT_SMALL, &press);
+
                 PWMAudioOn(BUZZER1);
                 LedFlashBlue(BLUE0);
                 ButtonAcknowledge(BUTTON0);
@@ -948,6 +971,12 @@ static void UserAppGamelevel2(void) {
 
             if (WasButtonPressed(BUTTON1) && InputIndex1 < Round) {
                 UserInput[InputIndex1++] = '1';
+
+                PixelAddressType press = {U8_LCD_SMALL_FONT_LINE5,InputIndex1 * 16};
+                u8 S[16] ; 
+                sprintf(S, "%d", UserInput[InputIndex1 - 1] -48);
+                LcdLoadString(S, LCD_FONT_SMALL, &press);
+
                 PWMAudioOn(BUZZER1);
                 LedFlashBlue(BLUE1);
                 ButtonAcknowledge(BUTTON1);
@@ -969,14 +998,21 @@ static void UserAppGamelevel2(void) {
                 if (strcmp((char*)UserInput, (char*)GeneratedNumbers) == 0) {
                     if (Round < 6) {
                         sprintf((char*)RoundMessage, "Round %d Cleared!", Round);
+                        PixelBlockType myblock = {40,0,8,128};
+                        LcdClearPixels(&myblock);
+
                     } else {
                         sprintf((char*)RoundMessage, "Final Round Cleared!");
                     }
                     LcdLoadString(RoundMessage, LCD_FONT_SMALL, &Position);
                     GamePhase = 4; // Move to success confirmation
                 } else {
-                    u8 IncorrectText[] = "Game Over!";
+                    u8 IncorrectText[] = "Eat More Salmon!!!";
                     LcdLoadString(IncorrectText, LCD_FONT_SMALL, &Position);
+
+                    PixelAddressType Position1 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
+                    u8 IncorrectText1[] = "Omega-3 boosts memory";
+                    LcdLoadString(IncorrectText1, LCD_FONT_SMALL, &Position1); 
                     GamePhase = 5; // Move to end state
                 }
                 Level2Timer = 0;
