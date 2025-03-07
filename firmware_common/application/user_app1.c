@@ -256,7 +256,7 @@ void UserApp1Initialize(void) {
     LcdLoadString(au8TestString2, LCD_FONT_SMALL, &sTestStringLocation2);
 
     PixelAddressType sTestStringLocation3 = {U8_LCD_SMALL_FONT_LINE5, U16_LCD_LEFT_MOST_COLUMN};
-    u8 au8TestString3[] = {"[button0][button1]"};
+    u8 au8TestString3[] = {"  [button0][button1]"};
     LcdLoadString(au8TestString3, LCD_FONT_SMALL, &sTestStringLocation3);
 
     /* Initialize state machine */
@@ -716,19 +716,21 @@ static void UserAppGamelevel1(void) {
         LcdLoadString(au8Welcometothegame, LCD_FONT_SMALL, &sWelcometothegame);
         clear = 1;
     }
+    PixelBlockType WelcomeClear = {16,0,8,128};
+    LcdClearPixels(&WelcomeClear);
 
     if (Level1clk == 1000 && clear == 1) {
-        LcdClearScreen();
+
         PixelAddressType sLevel1 = {U8_LCD_SMALL_FONT_LINE0, U16_LCD_LEFT_MOST_COLUMN};
         u8 au8Level1[] = {"     ---Level 1---"};
         LcdLoadString(au8Level1, LCD_FONT_SMALL, &sLevel1);
 
         PixelAddressType sLevel1_2 = {U8_LCD_SMALL_FONT_LINE3, U16_LCD_LEFT_MOST_COLUMN};
-        u8 au8Level1_2[] = {"Count in uint 0 to 7"};
+        u8 au8Level1_2[] = {" Count in Binary 0-7"};
         LcdLoadString(au8Level1_2, LCD_FONT_SMALL, &sLevel1_2);
 
         PixelAddressType sLevel1_3 = {U8_LCD_SMALL_FONT_LINE4, U16_LCD_LEFT_MOST_COLUMN};
-        u8 au8Level1_3[] = {" Button(0,1) = 0,1"};
+        u8 au8Level1_3[] = {"  [button0][button1]"};
         LcdLoadString(au8Level1_3, LCD_FONT_SMALL, &sLevel1_3);
     }
 
@@ -741,6 +743,12 @@ static void UserAppGamelevel1(void) {
     if (WasButtonPressed(BUTTON0)) {
         if (InputIndex < 3) {  // Ensure we don't go out of bounds
             Binarycount[InputIndex++] = 0;
+
+            PixelAddressType press = {U8_LCD_SMALL_FONT_LINE5,InputIndex * 32};
+            u8 S[16] ; 
+            sprintf(S, "%d", Binarycount[InputIndex - 1]);
+            LcdLoadString(S, LCD_FONT_SMALL, &press);
+            
             PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE0); // Feedback for Button0 press
             ButtonAcknowledge(BUTTON0);
@@ -751,6 +759,12 @@ static void UserAppGamelevel1(void) {
     if (WasButtonPressed(BUTTON1)) {
         if (InputIndex < 3) {  // Ensure we don't go out of bounds
             Binarycount[InputIndex++] = 1;
+
+            PixelAddressType press = {U8_LCD_SMALL_FONT_LINE5,InputIndex * 32};
+            u8 S[16] ; 
+            sprintf(S, "%d", Binarycount[InputIndex - 1]);
+            LcdLoadString(S, LCD_FONT_SMALL, &press); 
+
             PWMAudioOn(BUZZER1);
             LedFlashBlue(BLUE1); // Feedback for Button1 press
             ButtonAcknowledge(BUTTON1);
@@ -760,6 +774,10 @@ static void UserAppGamelevel1(void) {
 
     // When 3 bits are entered, process input
     if (InputIndex >= 3) {
+
+        PixelBlockType myblock = {40,0,8,128};
+        LcdClearPixels(&myblock);
+
         // Copy user input for verification
         for (int i = 0; i < 3; i++) {
             Binarycountcheck[i] = Binarycount[i];
@@ -775,6 +793,8 @@ static void UserAppGamelevel1(void) {
         static int i = 0;  // Initialize i within this scope
 
         if (decimalValue == 0 && i == 0) {
+
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber0 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber0[] = {" 000 = 0... Correct."};
             LcdLoadString(au8sbinarycountnumber0, LCD_FONT_SMALL, &sbinarycountnumber0);
@@ -782,6 +802,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 1 && i == 1) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber1 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber1[] = {" 001 = 1... Correct."};
             LcdLoadString(au8sbinarycountnumber1, LCD_FONT_SMALL, &sbinarycountnumber1);
@@ -789,6 +810,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 2 && i == 2) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber2 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber2[] = {" 010 = 2... Correct."};
             LcdLoadString(au8sbinarycountnumber2, LCD_FONT_SMALL, &sbinarycountnumber2);
@@ -796,6 +818,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 3 && i == 3) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber3 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber3[] = {" 011 = 3... Correct."};
             LcdLoadString(au8sbinarycountnumber3, LCD_FONT_SMALL, &sbinarycountnumber3);
@@ -803,6 +826,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 4 && i == 4) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber4 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber4[] = {" 100 = 4... Correct."};
             LcdLoadString(au8sbinarycountnumber4, LCD_FONT_SMALL, &sbinarycountnumber4);
@@ -810,6 +834,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 5 && i == 5) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber5 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber5[] = {" 101 = 5... Correct."};
             LcdLoadString(au8sbinarycountnumber5, LCD_FONT_SMALL, &sbinarycountnumber5);
@@ -817,6 +842,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 6 && i == 6) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber6 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber6[] = {" 110 = 6... Correct."};
             LcdLoadString(au8sbinarycountnumber6, LCD_FONT_SMALL, &sbinarycountnumber6);
@@ -824,6 +850,7 @@ static void UserAppGamelevel1(void) {
         }
 
         else if (decimalValue == 7 && i == 7) {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountnumber7 = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountnumber7[] = {" 111 = 7... Correct."};
             LcdLoadString(au8sbinarycountnumber7, LCD_FONT_SMALL, &sbinarycountnumber7);
@@ -832,6 +859,7 @@ static void UserAppGamelevel1(void) {
             UserApp1_pfStateMachine = UserAppLevel2sound;
         }
         else {
+            LcdClearPixels(&myblock);
             PixelAddressType sbinarycountfail = {U8_LCD_SMALL_FONT_LINE6, U16_LCD_LEFT_MOST_COLUMN};
             u8 au8sbinarycountfail[] = {" Incorrect!!!."};
             LcdLoadString(au8sbinarycountfail, LCD_FONT_SMALL, &sbinarycountfail);
